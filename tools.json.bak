@@ -346,6 +346,27 @@
                         "required": true
                     }
                 ]
+            },
+            {
+                "name": "secret get",
+                "description": "Retrieve a specific secret from a Key Vault.",
+                "params": [
+                    {
+                        "name": "subscription",
+                        "description": "The Azure subscription ID or name",
+                        "required": true
+                    },
+                    {
+                        "name": "vault",
+                        "description": "The name of the Key Vault",
+                        "required": true
+                    },
+                    {
+                        "name": "name",
+                        "description": "The name of the secret to retrieve",
+                        "required": true
+                    }
+                ]
             }
         ]
     },
@@ -416,6 +437,155 @@
                     {
                         "name": "limit",
                         "description": "The maximum number of results to return",
+                        "required": false
+                    }
+                ]
+            },
+            {
+                "name": "table type list",
+                "description": "List available table types in a Log Analytics workspace.",
+                "params": [
+                    {
+                        "name": "subscription",
+                        "description": "The Azure subscription ID or name",
+                        "required": true
+                    },
+                    {
+                        "name": "workspace",
+                        "description": "The Log Analytics workspace ID or name",
+                        "required": true
+                    }
+                ]
+            },
+            {
+                "name": "healthmodels entity gethealth",
+                "description": "Get the health of an entity.",
+                "params": [
+                    {
+                        "name": "subscription",
+                        "description": "The Azure subscription ID or name",
+                        "required": true
+                    },
+                    {
+                        "name": "resource-group",
+                        "description": "The name of the Azure resource group",
+                        "required": true
+                    },
+                    {
+                        "name": "model-name",
+                        "description": "The name of the health model",
+                        "required": true
+                    },
+                    {
+                        "name": "entity",
+                        "description": "The entity ID to get health for",
+                        "required": true
+                    }
+                ]
+            },
+            {
+                "name": "metrics query",
+                "description": "Query Azure Monitor metrics for a resource.",
+                "params": [
+                    {
+                        "name": "subscription",
+                        "description": "The Azure subscription ID or name",
+                        "required": true
+                    },
+                    {
+                        "name": "resource-name",
+                        "description": "The name of the resource to query metrics for",
+                        "required": true
+                    },
+                    {
+                        "name": "metric-namespace",
+                        "description": "The metric namespace",
+                        "required": true
+                    },
+                    {
+                        "name": "metric-names",
+                        "description": "The metric names to query",
+                        "required": true
+                    },
+                    {
+                        "name": "resource-group",
+                        "description": "The name of the Azure resource group",
+                        "required": false
+                    },
+                    {
+                        "name": "resource-type",
+                        "description": "The type of the resource",
+                        "required": false
+                    },
+                    {
+                        "name": "start-time",
+                        "description": "The start time for the query",
+                        "required": false
+                    },
+                    {
+                        "name": "end-time",
+                        "description": "The end time for the query",
+                        "required": false
+                    },
+                    {
+                        "name": "interval",
+                        "description": "The interval for aggregation",
+                        "required": false
+                    },
+                    {
+                        "name": "aggregation",
+                        "description": "The aggregation method",
+                        "required": false
+                    },
+                    {
+                        "name": "filter",
+                        "description": "Filter for the metrics query",
+                        "required": false
+                    },
+                    {
+                        "name": "max-buckets",
+                        "description": "Maximum number of buckets",
+                        "required": false
+                    }
+                ]
+            },
+            {
+                "name": "metrics definitions",
+                "description": "List available metric definitions for a resource.",
+                "params": [
+                    {
+                        "name": "subscription",
+                        "description": "The Azure subscription ID or name",
+                        "required": true
+                    },
+                    {
+                        "name": "resource-name",
+                        "description": "The name of the resource",
+                        "required": true
+                    },
+                    {
+                        "name": "resource-group",
+                        "description": "The name of the Azure resource group",
+                        "required": false
+                    },
+                    {
+                        "name": "resource-type",
+                        "description": "The type of the resource",
+                        "required": false
+                    },
+                    {
+                        "name": "metric-namespace",
+                        "description": "The metric namespace",
+                        "required": false
+                    },
+                    {
+                        "name": "search-string",
+                        "description": "Search string to filter metrics",
+                        "required": false
+                    },
+                    {
+                        "name": "limit",
+                        "description": "Maximum number of results to return",
                         "required": false
                     }
                 ]
@@ -677,6 +847,7 @@
     "azure-kusto": {
         "root": "azmcp kusto",
         "required-group": "Either of the two required groups must be provided.",
+        "documentation": "/azure/data-explorer/data-explorer-overview",
         "tools": [
             {
                 "name": "cluster list",
@@ -1061,6 +1232,42 @@
                         "required": true
                     }
                 ]
+            },
+            {
+                "name": "server setparam",
+                "description": "Set a specific parameter of a PostgreSQL server to a specific value.",
+                "params": [
+                    {
+                        "name": "subscription",
+                        "description": "The Azure subscription ID or name",
+                        "required": true
+                    },
+                    {
+                        "name": "resource-group",
+                        "description": "The name of the Azure resource group",
+                        "required": true
+                    },
+                    {
+                        "name": "user-name",
+                        "description": "The user name to access PostgreSQL server",
+                        "required": true
+                    },
+                    {
+                        "name": "server",
+                        "description": "The PostgreSQL server to be accessed",
+                        "required": true
+                    },
+                    {
+                        "name": "param",
+                        "description": "The PostgreSQL parameter to be set",
+                        "required": true
+                    },
+                    {
+                        "name": "value",
+                        "description": "The value to set for the parameter",
+                        "required": true
+                    }
+                ]
             }
         ]
     },
@@ -1143,9 +1350,106 @@
             }
         ]
     },
+    "azure-redis": {
+        "root": "azmcp redis",
+        "documentation": "/azure/azure-cache-for-redis/cache-overview",
+        "tools": [
+            {
+                "name": "cluster list",
+                "description": "List Redis Clusters in the Azure Managed Redis or Azure Redis Enterprise services.",
+                "params": [
+                    {
+                        "name": "subscription",
+                        "description": "The Azure subscription ID or name",
+                        "required": true
+                    }
+                ]
+            },
+            {
+                "name": "cluster database list",
+                "description": "List databases in an Azure Redis Cluster.",
+                "params": [
+                    {
+                        "name": "subscription",
+                        "description": "The Azure subscription ID or name",
+                        "required": true
+                    },
+                    {
+                        "name": "resource-group",
+                        "description": "The name of the Azure resource group",
+                        "required": true
+                    },
+                    {
+                        "name": "cluster",
+                        "description": "The name of the Redis cluster",
+                        "required": true
+                    }
+                ]
+            },
+            {
+                "name": "cache list",
+                "description": "List Redis Caches in the Azure Cache for Redis service.",
+                "params": [
+                    {
+                        "name": "subscription",
+                        "description": "The Azure subscription ID or name",
+                        "required": true
+                    }
+                ]
+            },
+            {
+                "name": "cache list accesspolicy",
+                "description": "List Access Policy Assignments in an Azure Redis Cache.",
+                "params": [
+                    {
+                        "name": "subscription",
+                        "description": "The Azure subscription ID or name",
+                        "required": true
+                    },
+                    {
+                        "name": "resource-group",
+                        "description": "The name of the Azure resource group",
+                        "required": true
+                    },
+                    {
+                        "name": "cache",
+                        "description": "The name of the Redis cache",
+                        "required": true
+                    }
+                ]
+            }
+        ]
+    },
+    "azure-native-isv": {
+        "root": "azmcp datadog",
+        "documentation": "/azure/partner-solutions/datadog/overview",
+        "tools": [
+            {
+                "name": "monitoredresources list",
+                "description": "List monitored resources in Datadog.",
+                "params": [
+                    {
+                        "name": "subscription",
+                        "description": "The Azure subscription ID or name",
+                        "required": true
+                    },
+                    {
+                        "name": "resource-group",
+                        "description": "The name of the Azure resource group",
+                        "required": true
+                    },
+                    {
+                        "name": "datadog-resource",
+                        "description": "The name of the Datadog resource",
+                        "required": true
+                    }
+                ]
+            }
+        ]
+    },
     "azure-rbac": {
         "root": "azmcp role",
-        "documentation": "",
+        "documentation": "/azure/role-based-access-control/overview",
         "tools": [
             {
                 "name": "assignment list",
@@ -1158,7 +1462,33 @@
                     },
                     {
                         "name": "scope",
-                        "description": "The scope to list role assignments for",
+                        "description": "The scope for the role assignments",
+                        "required": true
+                    }
+                ]
+            }
+        ]
+    },
+    "azure-best-practices": {
+        "root": "azmcp bestpractices",
+        "tools": [
+            {
+                "name": "get",
+                "description": "Get secure, production-grade Azure SDK best practices for effective code generation.",
+                "params": []
+            }
+        ]
+    },
+    "azure-devops-extension": {
+        "root": "azmcp extension",
+        "tools": [
+            {
+                "name": "azd",
+                "description": "Execute an Azure Developer CLI command.",
+                "params": [
+                    {
+                        "name": "command",
+                        "description": "The Azure Developer CLI command to execute (without the 'azd' prefix)",
                         "required": true
                     }
                 ]
