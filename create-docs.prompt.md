@@ -35,7 +35,7 @@ You are a senior content developer. Complete these instructions. Verify the fina
 
 ## Editorial review
 
-Review the content files with the following goals:
+Review any new markdown files using [Editorial instructions](editorial-review.md).
 
 ## Backup policy
 1. tools.json.bak is a backup file which may include existing PRs of content which haven't been merged yet. Do not edit it. It is used to restore the tools.json if needed.
