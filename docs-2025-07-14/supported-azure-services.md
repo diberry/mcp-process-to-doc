@@ -1,0 +1,26 @@
+Available server tools for the Azure MCP Server include:
+
+- **App Configuration** - Centrally manage application settings and feature flags.
+- **Azure AI Foundry** - Create and deploy generative AI applications and Azure AI APIs.
+- **Azure AI Search** - Create enterprise-grade search solutions.
+- **Azure AKS** - Deploy and manage containerized applications with Kubernetes.
+- **Azure Bicep** - Simplify the deployment of Azure resources using domain-specific language.
+- **Azure Cognitive Services** - Add intelligence capabilities to your applications.
+- **Azure Cosmos DB** - Globally distributed, multi-model database service.
+- **Azure Data Explorer** - Fast and highly scalable data exploration service.
+- **Azure Database for PostgreSQL** - Fully managed PostgreSQL database service.
+- **Azure Key Vault** - Safeguard and maintain control of keys and secrets.
+- **Azure Managed Grafana** - Visualize and analyze your data across multiple sources.
+- **Azure Monitor** - Collect, analyze, and act on telemetry data from your Azure resources.
+- **Azure Native ISV** - Access third-party services integrated with Azure.
+- **Azure Redis Cache** - High-throughput, low-latency data caching service.
+- **Azure Resource Group** - Container that holds related resources for an Azure solution.
+- **Azure Service Bus** - Reliable cloud messaging as a service.
+- **Azure SQL** - Intelligent, scalable, relational database service.
+- **Azure Storage** - Durable, highly available storage for files and data.
+- **Azure Subscription Management** - Manage and organize Azure accounts.
+- **Azure Terraform Best Practices** - Guidance for infrastructure as code on Azure.
+- **Best Practices** - Recommendations for optimizing Azure resources.
+- **Developer CLI** - Tools for developer productivity on Azure.
+- **MCP Tools** - Manage and explore available tools on the Azure MCP Server.
+- **RBAC** - Role-based access control for Azure resources.

@@ -1,0 +1,75 @@
+### YamlMime:Landing
+
+title: Azure MCP Server documentation
+summary: Discover how to use Azure MCP Server to interact with Azure services using natural language.
+
+metadata:
+  title: Azure MCP Server documentation
+  description: Learn about Azure MCP Server, what it is, how it works, and how to use it to interact with Azure services through natural language.
+  ms.service: azure-mcp-server
+  ms.topic: landing-page
+  author: diberry
+  ms.author: diberry
+  ms.date: 07/14/2025
+
+landingContent:
+  - title: Get started with Azure MCP Server
+    linkLists:
+      - linkListType: overview
+        links:
+          - text: What is Azure MCP Server?
+            url: overview.md
+          - text: Server protocols
+            url: server-protocols.md
+      - linkListType: get-started
+        links:
+          - text: Create an MCP Server in Azure
+            url: get-started.md
+          - text: Configure your MCP Server
+            url: configure-server.md
+          - text: Connect to your MCP Server
+            url: connect-to-server.md
+      - linkListType: whats-new
+        links:
+          - text: What's new in Azure MCP Server?
+            url: whats-new.md
+  
+  - title: Development & integration
+    linkLists:
+      - linkListType: concept
+        links:
+          - text: Azure MCP architecture
+            url: architecture.md
+          - text: Model Context Protocol
+            url: model-context-protocol.md
+          - text: Terminology
+            url: terminology.md
+      - linkListType: learn
+        links:
+          - text: MCP authentication and security
+            url: security.md
+          - text: Debug Azure MCP Server
+            url: debug.md
+      - linkListType: tutorial
+        links:
+          - text: Build a conversation agent using MCP
+            url: build-conversation-agent.md
+          - text: Deploy a VS Code extension
+            url: deploy-vscode-extension.md
+  
+  - title: Tools reference
+    linkLists:
+      - linkListType: reference
+        links:
+          - text: App Configuration
+            url: tools/app-configuration.md
+          - text: Azure AI Foundry
+            url: tools/azure-ai-foundry.md
+          - text: Azure Bicep
+            url: tools/azure-bicep.md
+          - text: Azure Managed Grafana
+            url: tools/azure-managed-grafana.md
+          - text: Azure Terraform Best Practices
+            url: tools/azure-terraform-best-practices.md
+          - text: View all tools
+            url: tools/index.md

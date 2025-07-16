@@ -1,0 +1,97 @@
+### YamlMime:TOC
+- name: Azure MCP Server
+  href: index.yml
+  items:
+  - name: Overview
+    href: overview.md
+  - name: What's new
+    href: whats-new.md
+  - name: Get started
+    href: get-started.md
+  - name: Configure
+    href: configure-server.md
+  - name: Connect
+    href: connect-to-server.md
+  - name: Architecture
+    href: architecture.md
+  - name: Security
+    href: security.md
+  - name: Model Context Protocol
+    href: model-context-protocol.md
+  - name: Debug
+    href: debug.md
+  - name: Terminology
+    href: terminology.md
+  - name: Server protocols
+    href: server-protocols.md
+
+- name: Tutorials
+  items:
+  - name: Build a conversation agent
+    href: build-conversation-agent.md
+  - name: Deploy a VS Code extension
+    href: deploy-vscode-extension.md
+
+- name: Tools reference
+  items:
+  - name: Available tools
+    href: tools/index.md
+  - name: App Configuration
+    href: tools/app-configuration.md
+  - name: Azure AI Foundry
+    href: tools/azure-ai-foundry.md
+  - name: Azure AI Search
+    href: tools/azure-ai-search.md
+  - name: Azure AKS
+    href: tools/azure-aks.md
+  - name: Azure Bicep
+    href: tools/azure-bicep.md
+  - name: Azure Cognitive Services
+    href: tools/azure-cognitive-services.md
+  - name: Azure Cosmos DB
+    href: tools/azure-cosmos-db.md
+  - name: Azure Data Explorer
+    href: tools/azure-data-explorer.md
+  - name: Azure Database for PostgreSQL
+    href: tools/azure-database-for-postgresql.md
+  - name: Azure Key Vault
+    href: tools/azure-key-vault.md
+  - name: Azure Managed Grafana
+    href: tools/azure-managed-grafana.md
+  - name: Azure Monitor
+    href: tools/azure-monitor.md
+  - name: Azure Native ISV
+    href: tools/azure-native-isv.md
+  - name: Azure Redis Cache
+    href: tools/azure-redis.md
+  - name: Azure Resource Group
+    href: tools/azure-resource-group.md
+  - name: Azure Service Bus
+    href: tools/azure-service-bus.md
+  - name: Azure SQL
+    href: tools/azure-sql.md
+  - name: Azure Storage
+    href: tools/azure-storage.md
+  - name: Azure Subscription Management
+    href: tools/azure-subscription.md
+  - name: Azure Terraform Best Practices
+    href: tools/azure-terraform-best-practices.md
+  - name: Best Practices
+    href: tools/azure-best-practices.md
+  - name: Developer CLI
+    href: tools/azure-developer-cli.md
+  - name: MCP Tools
+    href: tools/azure-mcp-tools.md
+  - name: RBAC
+    href: tools/azure-rbac.md
+
+- name: Resources
+  items:
+  - name: Azure roadmap
+    href: https://azure.microsoft.com/roadmap/
+  - name: Pricing
+    href: https://azure.microsoft.com/pricing/details/azure-mcp-server/
+  - name: Regional availability
+    href: https://azure.microsoft.com/global-infrastructure/services/?products=azure-mcp-server
+  - name: Known issues
+    href: known-issues.md

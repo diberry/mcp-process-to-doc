@@ -442,22 +442,6 @@
                 ]
             },
             {
-                "name": "table type list",
-                "description": "List available table types in a Log Analytics workspace.",
-                "params": [
-                    {
-                        "name": "subscription",
-                        "description": "The Azure subscription ID or name",
-                        "required": true
-                    },
-                    {
-                        "name": "workspace",
-                        "description": "The Log Analytics workspace ID or name",
-                        "required": true
-                    }
-                ]
-            },
-            {
                 "name": "healthmodels entity gethealth",
                 "description": "Get the health of an entity.",
                 "params": [
@@ -844,10 +828,83 @@
             }
         ]
     },
+    "azure-redis": {
+        "root": "azmcp redis",
+        "documentation": "https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/",
+        "tools": [
+            {
+                "name": "cluster list",
+                "description": "List Redis Clusters in Azure Managed Redis or Azure Redis Enterprise services.",
+                "params": [
+                    {
+                        "name": "subscription",
+                        "description": "The Azure subscription ID or name",
+                        "required": true
+                    }
+                ],
+                "documentation": "https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/cache-redis-enterprise-overview"
+            },
+            {
+                "name": "cluster database list",
+                "description": "List Databases in an Azure Redis Cluster.",
+                "params": [
+                    {
+                        "name": "subscription",
+                        "description": "The Azure subscription ID or name",
+                        "required": true
+                    },
+                    {
+                        "name": "resource-group",
+                        "description": "The name of the Azure resource group",
+                        "required": true
+                    },
+                    {
+                        "name": "cluster",
+                        "description": "The name of the Redis cluster",
+                        "required": true
+                    }
+                ],
+                "documentation": "https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/cache-redis-enterprise-overview"
+            },
+            {
+                "name": "cache list",
+                "description": "List Redis Caches in the Azure Cache for Redis service.",
+                "params": [
+                    {
+                        "name": "subscription",
+                        "description": "The Azure subscription ID or name",
+                        "required": true
+                    }
+                ],
+                "documentation": "https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/cache-overview"
+            },
+            {
+                "name": "cache list accesspolicy",
+                "description": "List Access Policy Assignments in an Azure Redis Cache.",
+                "params": [
+                    {
+                        "name": "subscription",
+                        "description": "The Azure subscription ID or name",
+                        "required": true
+                    },
+                    {
+                        "name": "resource-group",
+                        "description": "The name of the Azure resource group",
+                        "required": true
+                    },
+                    {
+                        "name": "cache",
+                        "description": "The name of the Redis cache",
+                        "required": true
+                    }
+                ],
+                "documentation": "https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/cache-configure-role-based-access-control"
+            }
+        ]
+    },
     "azure-kusto": {
         "root": "azmcp kusto",
         "required-group": "Either of the two required groups must be provided.",
-        "documentation": "/azure/data-explorer/data-explorer-overview",
         "tools": [
             {
                 "name": "cluster list",
@@ -1350,24 +1407,13 @@
             }
         ]
     },
-    "azure-redis": {
-        "root": "azmcp redis",
-        "documentation": "/azure/azure-cache-for-redis/cache-overview",
+  "azure-rbac": {
+        "root": "azmcp role",
+        "documentation": "",
         "tools": [
             {
-                "name": "cluster list",
-                "description": "List Redis Clusters in the Azure Managed Redis or Azure Redis Enterprise services.",
-                "params": [
-                    {
-                        "name": "subscription",
-                        "description": "The Azure subscription ID or name",
-                        "required": true
-                    }
-                ]
-            },
-            {
-                "name": "cluster database list",
-                "description": "List databases in an Azure Redis Cluster.",
+                "name": "assignment list",
+                "description": "List Azure RBAC role assignments.",
                 "params": [
                     {
                         "name": "subscription",
@@ -1375,54 +1421,17 @@
                         "required": true
                     },
                     {
-                        "name": "resource-group",
-                        "description": "The name of the Azure resource group",
-                        "required": true
-                    },
-                    {
-                        "name": "cluster",
-                        "description": "The name of the Redis cluster",
-                        "required": true
-                    }
-                ]
-            },
-            {
-                "name": "cache list",
-                "description": "List Redis Caches in the Azure Cache for Redis service.",
-                "params": [
-                    {
-                        "name": "subscription",
-                        "description": "The Azure subscription ID or name",
-                        "required": true
-                    }
-                ]
-            },
-            {
-                "name": "cache list accesspolicy",
-                "description": "List Access Policy Assignments in an Azure Redis Cache.",
-                "params": [
-                    {
-                        "name": "subscription",
-                        "description": "The Azure subscription ID or name",
-                        "required": true
-                    },
-                    {
-                        "name": "resource-group",
-                        "description": "The name of the Azure resource group",
-                        "required": true
-                    },
-                    {
-                        "name": "cache",
-                        "description": "The name of the Redis cache",
+                        "name": "scope",
+                        "description": "The scope to list role assignments for",
                         "required": true
                     }
                 ]
             }
         ]
     },
-    "azure-native-isv": {
+      "azure-native-isv": {
         "root": "azmcp datadog",
-        "documentation": "/azure/partner-solutions/datadog/overview",
+        "documentation": "https://learn.microsoft.com/en-us/azure/partner-solutions/datadog/",
         "tools": [
             {
                 "name": "monitoredresources list",
@@ -1443,56 +1452,10 @@
                         "description": "The name of the Datadog resource",
                         "required": true
                     }
-                ]
-            }
-        ]
-    },
-    "azure-rbac": {
-        "root": "azmcp role",
-        "documentation": "/azure/role-based-access-control/overview",
-        "tools": [
-            {
-                "name": "assignment list",
-                "description": "List Azure RBAC role assignments.",
-                "params": [
-                    {
-                        "name": "subscription",
-                        "description": "The Azure subscription ID or name",
-                        "required": true
-                    },
-                    {
-                        "name": "scope",
-                        "description": "The scope for the role assignments",
-                        "required": true
-                    }
-                ]
-            }
-        ]
-    },
-    "azure-best-practices": {
-        "root": "azmcp bestpractices",
-        "tools": [
-            {
-                "name": "get",
-                "description": "Get secure, production-grade Azure SDK best practices for effective code generation.",
-                "params": []
-            }
-        ]
-    },
-    "azure-devops-extension": {
-        "root": "azmcp extension",
-        "tools": [
-            {
-                "name": "azd",
-                "description": "Execute an Azure Developer CLI command.",
-                "params": [
-                    {
-                        "name": "command",
-                        "description": "The Azure Developer CLI command to execute (without the 'azd' prefix)",
-                        "required": true
-                    }
-                ]
+                ],
+                "documentation": "https://learn.microsoft.com/en-us/azure/partner-solutions/datadog/manage"
             }
         ]
     }
+  
 }
