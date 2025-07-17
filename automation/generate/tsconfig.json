@@ -16,5 +16,6 @@
     "allowSyntheticDefaultImports": true // Helpful for ESM interop
   },
   "include": [
-    "src/**/*.ts"]
+    "src/**/*.ts"
+, "../../persistence.ts"  ]
 }

@@ -35,7 +35,7 @@ import { Buffer } from "buffer";
 import { AGENT_INSTRUCTIONS } from "./instructions.js";
 
 // Import simplified persistence
-import { SimpleState, initializeRun, loadPreviousResults } from "./simple-persistence.js";
+import { SimpleState, initializeRun, loadPreviousResults, createAgentInstructions } from "./simple-persistence.js";
 // Import configuration
 import { getRunConfiguration } from "./config.js";
 
@@ -193,6 +193,82 @@ async function uploadFiles(client: AgentsClient, filePaths: string[]): Promise<a
 }
 
 /**
+ * Create an agent specialized for MCP documentation work
+ * @param {AgentsClient} client - The client to use for agent creation
+ * @param {string[]} fileIds - IDs of files to attach to the agent
+ * @returns {Promise<any>} The created agent
+ */
+async function createDocumentationAgent(client: AgentsClient, fileIds: string[]): Promise<any> {
+  const codeInterpreterTool = ToolUtility.createCodeInterpreterTool(fileIds);
+  
+//   const agentInstructions = `
+// You are an expert Azure documentation specialist with deep knowledge of Azure services and documentation standards.
+// Your task is to analyze Azure MCP (Model Context Protocol) information provided by the engineering team to identify new tools and operations.
+
+// You have access to the following files:
+// - azmcp-commands.md: Engineering team's command reference
+// - tools.json: Content team's current tool definitions
+// - new.template.md: Template for organizing new findings
+// - create-docs.prompt.md: Documentation creation guidelines
+// - editorial-review.md: Editorial review process and standards
+
+// Follow these steps:
+// 1. Compare the engineering team's azmcp-commands.md file with the content team's tools.json to find new tools/commands.
+// 2. Identify completely new tool categories that don't exist in tools.json.
+// 3. Identify new operations for existing tool categories.
+// 4. Create properly formatted output in new.md based on new.template.md format.
+// 5. Update tools.json with the new tools and operations while maintaining the existing structure.
+// 6. Follow the guidelines in create-docs.prompt.md and editorial-review.md for documentation standards.
+// 7. Research and add documentation URLs for each new tool to understand proper branding and terminology.
+
+// Use JavaScript/TypeScript, JSON processing capabilities, and markdown parsing to accomplish this task.
+// `;
+
+  const agentInstructions = fs.promises.readFile(config.sourceFilePaths.createDocsPromptPath, "utf8");
+
+  const agent = await client.createAgent(config.azure.modelDeploymentName, {
+    name: "azure-mcp-documentation-agent",
+    instructions: agentInstructions,
+    tools: [codeInterpreterTool.definition],
+    toolResources: codeInterpreterTool.resources,
+  });
+  
+  console.log(`Created documentation agent, agent ID: ${agent.id}`);
+  return agent;
+}
+
+/**
+ * Create a documentation agent with a specific model and simplified persistence
+ * @param {AgentsClient} client - The client to use for agent creation
+ * @param {string[]} fileIds - IDs of files to attach to the agent
+ * @param {string} modelName - The model deployment name to use
+ * @param {string} agentNotesDir - Directory where agent should write notes
+ * @param {boolean} hasPreviousResults - Whether previous results are available
+ * @returns {Promise<any>} The created agent
+ */
+async function createDocumentationAgentWithModel(
+  client: AgentsClient, 
+  fileIds: string[], 
+  modelName: string, 
+  agentNotesDir: string, 
+  hasPreviousResults: boolean = false
+): Promise<any> {
+  const codeInterpreterTool = ToolUtility.createCodeInterpreterTool(fileIds);
+  
+  const agentInstructions = createAgentInstructions(agentNotesDir, hasPreviousResults ? "previous-new.md" : undefined);
+
+  const agent = await client.createAgent(modelName, {
+    name: "azure-mcp-documentation-agent",
+    instructions: agentInstructions,
+    tools: [codeInterpreterTool.definition],
+    toolResources: codeInterpreterTool.resources,
+  });
+  
+  console.log(`Created documentation agent with model ${modelName}, agent ID: ${agent.id}`);
+  return agent;
+}
+
+/**
  * Create a new thread
  * @param {AgentsClient} client - The client to use for thread creation
  * @returns {Promise<any>} The created thread
@@ -211,29 +287,122 @@ async function createThread(client: AgentsClient): Promise<any> {
  * @returns {Promise<any>} The created message
  */
 async function sendDocumentationTask(client: AgentsClient, threadId: string, agentNotesDir: string, hasExistingNewMd: boolean = false): Promise<any> {
+  const baseAnalysisCode = `
+import re
+import json
+import os
+
+# Create agent notes directory and write initial log
+os.makedirs("${agentNotesDir.replace(/\\/g, '/')}", exist_ok=True)
+
+print("=== ANALYZING AZURE MCP TOOLS ===")
+print("Available files:", os.listdir("."))
+
+# Log to agent notes
+with open("${agentNotesDir.replace(/\\/g, '/')}/analysis-log.txt", "w") as log_file:
+    log_file.write("Starting Azure MCP analysis\\n")
+    log_file.write(f"Available files: {os.listdir('.')}\\n")
+
+# Load azmcp-commands.md
+with open('azmcp-commands.md', 'r') as f:
+    commands_content = f.read()
+
+# Load tools.json  
+with open('tools.json', 'r') as f:
+    tools_data = json.load(f)
+
+# Extract function names from commands
+command_functions = re.findall(r'mcp_azure_mcp_ser_azmcp-[a-zA-Z0-9_-]+', commands_content)
+
+# Extract function names from tools
+tool_functions = []
+if isinstance(tools_data, list):
+    for tool in tools_data:
+        if 'function' in tool:
+            tool_functions.append(tool['function'])
+
+# Find new functions
+new_functions = sorted(set(command_functions) - set(tool_functions))
+
+print(f"\\nFound {len(command_functions)} total functions in commands")
+print(f"Found {len(tool_functions)} existing functions in tools")
+print(f"Found {len(new_functions)} NEW functions")
+
+# Save detailed analysis to agent notes
+with open("${agentNotesDir.replace(/\\/g, '/')}/function-analysis.txt", "w") as analysis_file:
+    analysis_file.write(f"Total functions: {len(command_functions)}\\n")
+    analysis_file.write(f"Existing functions: {len(tool_functions)}\\n")
+    analysis_file.write(f"New functions: {len(new_functions)}\\n\\n")
+    analysis_file.write("New function list:\\n")
+    for i, func in enumerate(new_functions, 1):
+        analysis_file.write(f"{i}. {func}\\n")
+`;
+
+  const existingFileHandling = hasExistingNewMd ? `
+# Check if new.md already exists and load it
+existing_new_functions = []
+if os.path.exists('new.md'):
+    print("\\n=== FOUND EXISTING new.md FILE ===")
+    with open('new.md', 'r') as f:
+        existing_content = f.read()
+    
+    # Extract existing function names from the file
+    existing_lines = existing_content.split('\\n')
+    for line in existing_lines:
+        if line.strip() and (line.startswith('- mcp_') or line.split('. ', 1)[-1].startswith('mcp_')):
+            # Handle both "- function_name" and "1. function_name" formats
+            func_name = line.split('mcp_', 1)[-1].split()[0] if 'mcp_' in line else ''
+            if func_name:
+                existing_new_functions.append(f"mcp_{func_name}")
+    
+    print(f"Found {len(existing_new_functions)} functions in existing new.md")
+    
+    # Combine with newly found functions (remove duplicates)
+    all_new_functions = sorted(set(new_functions + existing_new_functions))
+    print(f"Total unique new functions after merge: {len(all_new_functions)}")
+    new_functions = all_new_functions
+else:
+    print("\\nNo existing new.md file found - creating fresh analysis")
+` : `
+print("\\nNo existing new.md file to check - creating fresh analysis")
+`;
+
   const content = `
-Please follow your instructions from create-docs.prompt.md to complete the full documentation process. You have all the necessary files uploaded and ready to work with.
+IMPORTANT: You must use the code interpreter tool to execute Python code. Do not just describe what would happen - actually run the code.
 
-CRITICAL REQUIREMENTS:
-1. You must use the code interpreter tool to execute code - do not just describe what you would do
-2. You must create the final output files (new.md, updated tools.json) in your working directory so they can be downloaded
-3. After creating files, use the file browser or list files to show what you created
+Execute this Python analysis:
 
-Your uploaded files include:
-- azmcp-commands.md (engineering team's command reference)
-- tools.json (content team's current tool definitions)  
-- new.md.template (format for organizing findings)
-- create-docs.prompt.md (your full instructions)
-- editorial-review.md (editorial standards)
-${hasExistingNewMd ? '- new.md (previous results to build upon)' : ''}
+${baseAnalysisCode}
+${existingFileHandling}
 
-Write all intermediate work, logs, and analysis to the agent notes directory: ${agentNotesDir.replace(/\\/g, '/')}
+# Create new.md with detailed information
+new_md_content = f"""# New Azure MCP Functions Analysis
 
-IMPORTANT: At the end, create these files in your working directory for download:
-- new.md (following the template format)
-- tools.json (updated with new tools)
+## Summary
+- **Total functions in azmcp-commands.md**: {len(command_functions)}
+- **Existing functions in tools.json**: {len(tool_functions)}
+- **New functions discovered**: {len(new_functions)}
 
-Begin now - follow your instructions exactly as written.
+## New Functions List
+
+"""
+
+for i, func in enumerate(new_functions, 1):
+    new_md_content += f"{i}. {func}\\n"
+
+# Save to new.md
+with open('new.md', 'w') as f:
+    f.write(new_md_content)
+
+print("\\n=== COMPLETE CONTENTS OF new.md ===")
+print(new_md_content)
+print("=== END OF new.md ===")
+
+print(f"\\nFirst 10 new functions:")
+for i, func in enumerate(new_functions[:10], 1):
+    print(f"{i}. {func}")
+    
+print(f"\\nTotal functions saved to new.md: {len(new_functions)}")
 `;
 
   const message = await client.messages.create(threadId, "user", content);
@@ -379,68 +548,167 @@ async function processRunStream(client: AgentsClient, threadId: string, agentId:
 }
 
 /**
- * Download any files created by the agent during code execution
+ * Extract and save generated files from the assistant's message
  * @param {AgentsClient} client - The client to use for file operations
- * @param {string} threadId - The thread ID to check for generated files
  * @param {any[]} messagesArray - Array of messages to search for files
  * @param {string} contentDir - Directory where content files should be saved
  * @param {string} sourceOfTruthDir - Directory where persistent files should be saved
  * @returns {Promise<string[]>} Paths to the saved files
  */
-async function saveGeneratedFiles(client: AgentsClient, threadId: string, messagesArray: any[], contentDir: string, sourceOfTruthDir: string): Promise<string[]> {
-async function saveGeneratedFiles(client: AgentsClient, threadId: string, messagesArray: any[], contentDir: string, sourceOfTruthDir: string): Promise<string[]> {
+async function saveGeneratedFiles(client: AgentsClient, messagesArray: any[], contentDir: string, sourceOfTruthDir: string): Promise<string[]> {
   const savedFilePaths = [];
   
-  console.log(`\n=== DOWNLOADING AGENT-GENERATED FILES ===`);
+  console.log(`\n=== DEBUGGING: Found ${messagesArray.length} total messages ===`);
   
-  // Look for direct file attachments in messages
+  // Get the assistant's message(s)
   const assistantMessages = messagesArray.filter((msg) => msg.role === "assistant");
-  console.log(`Found ${assistantMessages.length} assistant messages to check for files`);
+  console.log(`Found ${assistantMessages.length} assistant messages`);
   
+  if (!assistantMessages.length) {
+    console.log("No assistant messages found");
+    return savedFilePaths;
+  }
+
   for (let i = 0; i < assistantMessages.length; i++) {
     const message = assistantMessages[i];
-    console.log(`\n--- Checking assistant message ${i + 1} ---`);
+    console.log(`\n--- Processing assistant message ${i + 1} ---`);
+    console.log(`Message content length: ${message.content?.length || 0}`);
     
     if (message.content) {
-      for (const content of message.content) {
-        if (content.type === "file" && content.file?.fileId) {
-          try {
-            const fileId = content.file.fileId;
-            const fileInfo = await client.files.get(fileId);
-            const fileName = fileInfo.filename;
-            const localFilePath = path.join(contentDir, fileName);
+      message.content.forEach((content, idx) => {
+        console.log(`Content ${idx + 1}: type="${content.type}"`);
+        if (content.type === "text" && content.text?.value) {
+          const textLength = content.text.value.length;
+          console.log(`  Text content length: ${textLength}`);
+          console.log(`  Contains code blocks: ${content.text.value.includes("```")}`);
+          console.log(`  First 200 chars: ${content.text.value.substring(0, 200)}...`);
+        } else if (content.type === "file") {
+          console.log(`  File ID: ${content.file?.fileId}`);
+        }
+      });
+    }
+
+    // Look for any file attachments in the message
+    const fileOutputs = message.content.filter(content => 
+      (content.type === "file" && content.file?.fileId) || 
+      (content.type === "text" && content.text?.value.includes("```"))
+    );
+    
+    console.log(`Found ${fileOutputs.length} potential file outputs in this message`);
+    
+    if (!fileOutputs.length) {
+      console.log("No file outputs found in this assistant message");
+      continue;
+    }
+
+    // Process each file output
+    for (const output of fileOutputs) {
+      try {
+        if (output.type === "file" && output.file?.fileId) {
+          // Handle direct file attachment
+          const fileId = output.file.fileId;
+          const fileInfo = await client.files.get(fileId);
+          const fileName = fileInfo.filename;
+          const localFilePath = path.join(contentDir, fileName);
+          
+          console.log(`Processing file attachment: ${fileName}`);
+          
+          const fileContent = await client.files.getContent(fileId).asNodeStream();
+          if (fileContent && fileContent.body) {
+            const chunks = [];
+            for await (const chunk of fileContent.body) {
+              chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+            }
+            const buffer = Buffer.concat(chunks);
+            fs.writeFileSync(localFilePath, buffer);
+            console.log(`✓ Saved file to ${localFilePath}`);
+            savedFilePaths.push(localFilePath);
+          }
+        } else if (output.type === "text") {
+          // Extract files from code blocks in text
+          const text = output.text.value;
+          console.log(`Processing text content for code blocks...`);
+          
+          // More comprehensive regex to catch different code block formats
+          const patterns = [
+            // Standard format with filename
+            /```(?:json|markdown|md|javascript|js)?\s*(?:filename:\s*)?([^\n\s]+\.(?:json|md|js))\s*\n([\s\S]*?)```/gi,
+            // Format with just the extension
+            /```(json|markdown|md)\s*\n([\s\S]*?)```/gi,
+            // Any code block
+            /```(?:json|markdown|md|javascript|js)?\s*\n([\s\S]*?)```/gi
+          ];
+          
+          let foundFiles = false;
+          
+          for (const pattern of patterns) {
+            const matches = [...text.matchAll(pattern)];
+            console.log(`Pattern found ${matches.length} matches`);
             
-            console.log(`Downloading file attachment: ${fileName} (ID: ${fileId})`);
-            
-            const fileContent = await client.files.getContent(fileId).asNodeStream();
-            if (fileContent && fileContent.body) {
-              const chunks = [];
-              for await (const chunk of fileContent.body) {
-                chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-              }
-              const buffer = Buffer.concat(chunks);
-              fs.writeFileSync(localFilePath, buffer);
-              console.log(`✓ Downloaded and saved file to ${localFilePath}`);
-              savedFilePaths.push(localFilePath);
+            for (const match of matches) {
+              foundFiles = true;
+              let fileName = "";
+              let content = "";
               
-              // If this is new.md, also save it persistently in source-of-truth for next run
-              if (fileName === "new.md") {
-                const persistentPath = path.join(sourceOfTruthDir, "new.md");
-                fs.writeFileSync(persistentPath, buffer);
-                console.log(`✓ Saved persistent copy to ${persistentPath} for future runs`);
+              if (match.length === 3 && match[1] && match[2]) {
+                // Pattern with filename
+                fileName = match[1];
+                content = match[2];
+              } else if (match.length === 3 && (match[1] === 'json' || match[1] === 'markdown' || match[1] === 'md')) {
+                // Pattern with extension only
+                content = match[2];
+                if (match[1] === 'json') {
+                  fileName = "updated-tools.json";
+                } else {
+                  fileName = "new.md";
+                }
+              } else if (match.length === 2) {
+                // Any code block
+                content = match[1];
+                // Guess filename from content
+                if (content.includes("{") && content.includes("}")) {
+                  fileName = "updated-tools.json";
+                } else if (content.includes("# New Azure MCP Tools") || content.includes("# New") || content.includes("## ")) {
+                  fileName = "new.md";
+                } else {
+                  fileName = "documentation-research.md";
+                }
+              }
+              
+              if (fileName && content && content.trim()) {
+                console.log(`Found code block for file: ${fileName}`);
+                console.log(`Content length: ${content.length}`);
+                console.log(`Content preview: ${content.substring(0, 100)}...`);
+                
+                const localFilePath = path.join(contentDir, fileName);
+                fs.writeFileSync(localFilePath, content.trim());
+                console.log(`✓ Extracted and saved file to ${localFilePath}`);
+                savedFilePaths.push(localFilePath);
+                
+                // If this is new.md, also save it persistently in source-of-truth for next run
+                if (fileName === "new.md") {
+                  const persistentPath = path.join(sourceOfTruthDir, "new.md");
+                  fs.writeFileSync(persistentPath, content.trim());
+                  console.log(`✓ Saved persistent copy to ${persistentPath} for future runs`);
+                }
               }
             }
-          } catch (error) {
-            console.error(`Error downloading file attachment:`, error);
+            
+            if (foundFiles) break; // Stop after first successful pattern
+          }
+          
+          if (!foundFiles) {
+            console.log("No code blocks found in text content");
           }
         }
+      } catch (error) {
+        console.error("Error saving generated file:", error);
       }
     }
   }
   
-  console.log(`\n=== DOWNLOAD COMPLETE: Saved ${savedFilePaths.length} files ===`);
+  console.log(`\n=== DEBUGGING COMPLETE: Saved ${savedFilePaths.length} files ===`);
   return savedFilePaths;
-}
 }
 
 /**
@@ -570,22 +838,17 @@ export async function setupAzureAgent(client: AgentsClient, uploadedFiles: any[]
   const fileIds = uploadedFiles.map(file => file.id);
   const codeInterpreterTool = ToolUtility.createCodeInterpreterTool(fileIds);
   
-  // Load the current agent instructions from the prompt file
-  const agentInstructions = await fs.promises.readFile(config.sourceFilePaths.createDocsPromptPath, "utf8");
-  
   try {
     if (typeof client.updateAgent === 'function') {
       await client.updateAgent(existingAgentId, {
-        instructions: agentInstructions,
         toolResources: codeInterpreterTool.resources,
       });
-      console.log(`Successfully updated agent with new instructions and file IDs: ${fileIds.join(', ')}`);
+      console.log(`Successfully updated agent with file IDs: ${fileIds.join(', ')}`);
     } else {
       console.log("Agent update method not available - proceeding with existing agent as-is");
-      console.log("WARNING: Agent may have outdated instructions!");
     }
   } catch (error) {
-    console.log(`Warning: Could not update agent: ${error.message}`);
+    console.log(`Warning: Could not update agent tool resources: ${error.message}`);
     console.log("Proceeding with existing agent configuration...");
   }
   
@@ -596,7 +859,7 @@ export async function setupAzureAgent(client: AgentsClient, uploadedFiles: any[]
 /**
  * Execute the documentation generation process
  */
-export async function executeDocumentationGeneration(client: AgentsClient, agentId: string, runState: any, hasPreviousResults: boolean): Promise<{ threadId: string, messages: any[] }> {
+export async function executeDocumentationGeneration(client: AgentsClient, agentId: string, runState: any, hasPreviousResults: boolean): Promise<any[]> {
   console.log("Executing documentation generation...");
   
   // Always create a new thread for fresh start
@@ -614,36 +877,30 @@ export async function executeDocumentationGeneration(client: AgentsClient, agent
   const messages = await getThreadMessages(client, thread.id);
   
   console.log("✓ Documentation generation completed");
-  return { threadId: thread.id, messages };
+  return messages;
 }
 
 /**
  * Process and save AI response and generated files
  */
-export async function processAIResponse(client: AgentsClient, threadId: string, messages: any[]): Promise<string[]> {
+export async function processAIResponse(client: AgentsClient, messages: any[]): Promise<string[]> {
   console.log("Processing AI response...");
   
-  try {
-    // Save raw AI response for debugging
-    const assistantMessages = messages.filter(msg => msg.role === 'assistant');
-    if (assistantMessages.length > 0) {
-      const rawResponseFile = config.runFilePaths.rawResponseFilePath;
-      const latestResponse = assistantMessages[0];
-      console.log(`Latest assistant message content preview:`, extractTextPreview(latestResponse.content));
-      
-      fs.writeFileSync(rawResponseFile, JSON.stringify(latestResponse, null, 2));
-      console.log(`Saved raw AI response to: ${rawResponseFile}`);
-    }
+  // Save raw AI response for debugging
+  const assistantMessages = messages.filter(msg => msg.role === 'assistant');
+  if (assistantMessages.length > 0) {
+    const rawResponseFile = config.runFilePaths.rawResponseFilePath;
+    const latestResponse = assistantMessages[0];
+    console.log(`Latest assistant message content preview:`, latestResponse.content.slice(0, 200) + '...');
     
-    const savedFilePaths = await saveGeneratedFiles(client, threadId, messages, config.runPaths.contentDir, config.runPaths.sourceOfTruthDir);
-    
-    console.log("✓ AI response processed successfully");
-    console.log(`Returning ${savedFilePaths?.length || 0} saved file paths`);
-    return savedFilePaths || [];
-  } catch (error) {
-    console.error("Error in processAIResponse:", error);
-    return [];
+    fs.writeFileSync(rawResponseFile, JSON.stringify(latestResponse, null, 2));
+    console.log(`Saved raw AI response to: ${rawResponseFile}`);
   }
+  
+  const savedFilePaths = await saveGeneratedFiles(client, messages, config.runPaths.contentDir, config.runPaths.sourceOfTruthDir);
+  
+  console.log("✓ AI response processed successfully");
+  return savedFilePaths;
 }
 
 /**
@@ -672,38 +929,7 @@ export function printSummary(savedFilePaths: string[], runState: any): void {
   console.log("Generated files saved to:", config.runPaths.contentDir);
   console.log("Agent notes saved to:", runState.agentNotesDir);
   console.log("Files generated:");
-  if (savedFilePaths && Array.isArray(savedFilePaths)) {
-    savedFilePaths.forEach(filePath => console.log(`- ${filePath}`));
-  } else {
-    console.log("- No files were generated or saved");
-    console.log(`- savedFilePaths value: ${savedFilePaths}`);
-  }
-}
-
-/**
- * Extract a text preview from an AI message content array or plain text
- * @param {any} messageContent - The message content array from an AI response or plain text
- * @param {number} maxLength - Maximum length of the preview (default: 200)
- * @returns {string} A preview of the text content or a fallback message
- */
-function extractTextPreview(messageContent: any, maxLength: number = 200): string {
-  // Handle plain string input
-  if (typeof messageContent === 'string') {
-    return messageContent.length > maxLength ? messageContent.slice(0, maxLength) + '...' : messageContent;
-  }
-  
-  // Handle array input (AI message content)
-  if (!messageContent || !Array.isArray(messageContent) || messageContent.length === 0) {
-    return "No content found";
-  }
-  
-  const textContent = messageContent.find(content => content.type === 'text');
-  if (!textContent || !textContent.text || !textContent.text.value) {
-    return "No text content found";
-  }
-  
-  const text = textContent.text.value;
-  return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
+  savedFilePaths.forEach(filePath => console.log(`- ${filePath}`));
 }
 
 /**
@@ -728,10 +954,10 @@ export async function main(): Promise<void> {
     const agentId = await setupAzureAgent(client, uploadedFiles);
     
     // Step 6: Execute documentation generation process
-    const { threadId, messages } = await executeDocumentationGeneration(client, agentId, runState, hasPreviousResults);
+    const messages = await executeDocumentationGeneration(client, agentId, runState, hasPreviousResults);
     
     // Step 7: Process AI response and save generated files
-    const savedFilePaths = await processAIResponse(client, threadId, messages);
+    const savedFilePaths = await processAIResponse(client, messages);
     
     // Step 8: Clean up Azure resources
     await cleanupAzureResources(client, uploadedFiles, agentId);
