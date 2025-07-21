@@ -1,0 +1,39 @@
+{
+  "name": "mcp-process-to-doc",
+  "version": "1.0.0",
+  "description": "Tools to generate documentation for Azure MCP tools",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "generate-tools": "node src/generate-tools-json.js",
+    "test": "node src/test-tools-json.js",
+    "create-new-md": "node src/create-new-md.js",
+    "generate-tool-doc": "node src/generate-tool-doc.js",
+    "generate-all-docs": "node src/generate-all-docs.js",
+    "update-toc": "node src/update-toc.js",
+    "update-index": "node src/update-index.js",
+    "update-supported-services": "node src/update-supported-services.js",
+    "run-all": "bash src/run-all.sh",
+    "full-process": "npm run run-all"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/diberry/mcp-process-to-doc.git"
+  },
+  "keywords": [
+    "azure",
+    "mcp",
+    "documentation",
+    "generator"
+  ],
+  "author": "Microsoft",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/diberry/mcp-process-to-doc/issues"
+  },
+  "homepage": "https://github.com/diberry/mcp-process-to-doc#readme",
+  "dependencies": {
+    "fs": "0.0.1-security",
+    "path": "^0.12.7"
+  }
+}

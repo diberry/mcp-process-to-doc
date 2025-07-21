@@ -1,17 +1,16 @@
-# New Azure MCP Tools Summary
+# Azure {{TOOL_NAME}}
 
-## 🆕 New Tool Categories
+This tool provides access to Azure {{TOOL_NAME}} capabilities within MCP Server.
 
-| Service | Command | Description |
-|---------|---------|-------------|
-| **[Service Name]** | `azmcp [command]` | [Brief description] |
-| | `azmcp [another command]` | [Brief description] |
-| **[Another Service]** | `azmcp [command]` | [Brief description] |
+## Tool ID
 
-## ➕ New Operations for Existing Tools
+`{{TOOL_ID}}`
 
-| Service | Command | Description |
-|---------|---------|-------------|
-| **[Existing Service]** | `azmcp [new command]` | [Brief description] |
-| | `azmcp [another command]` | [Brief description] |
-| **[Another Existing Service]** | `azmcp [command]` | [Brief description] |
+## Operations
+
+{{OPERATIONS}}
+
+## Related Resources
+
+- [Azure {{TOOL_NAME}} Documentation](https://learn.microsoft.com/azure/{{TOOL_NAME}})
+- [Azure {{TOOL_NAME}} CLI Reference](https://learn.microsoft.com/cli/azure/{{TOOL_NAME}})
