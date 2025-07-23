@@ -22,7 +22,12 @@
     "update-index": "node src/navigation-generators/update-index.js",
     "update-supported-services": "node src/navigation-generators/update-supported-services.js",
     "run-all": "bash src/run-all.sh",
-    "full-process": "npm run run-all"
+    "full-process": "npm run run-all",
+    "analyze-prompt-changes": "node src/automation/cli/analyze-prompt-changes.js",
+    "apply-prompt-updates": "node src/automation/cli/apply-prompt-updates.js",
+    "validate-integration": "node src/automation/cli/validate-integration.js",
+    "sync-prompt-to-code": "npm run analyze-prompt-changes && npm run apply-prompt-updates",
+    "full-validation": "npm run validate-integration"
   },
   "repository": {
     "type": "git",

@@ -1,0 +1,131 @@
+{
+  "workflow": {
+    "name": "azure-mcp-documentation-generation",
+    "version": "1.0.0",
+    "description": "Generate documentation for Azure MCP Server tools"
+  },
+  "sources": {
+    "engineering": {
+      "azmcp-commands": "https://github.com/Azure/azure-mcp/blob/main/docs/azmcp-commands.md",
+      "e2e-test-prompts": "https://github.com/Azure/azure-mcp/blob/main/e2eTests/e2eTestPrompts.md",
+      "command-descriptions": "https://github.com/Azure/azure-mcp/blob/main/src/Areas/{area}/Commands/{command}/{operation}Command.cs"
+    },
+    "documentation": {
+      "tools-json": "https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/tools/tools.json",
+      "examples": {
+        "app-config": "https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/tools/app-configuration.md",
+        "azure-cli": "https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/tools/azure-cli-extension.md",
+        "datadog": "https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/tools/azure-native-isv.md"
+      },
+      "navigation": {
+        "toc": "https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/TOC.yml",
+        "index": "https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/index.yml",
+        "supported-services": "https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/includes/tools/supported-azure-services.md"
+      }
+    }
+  },
+  "templates": {
+    "primary": "generated-documentation.template.md",
+    "partial": "new.template.md"
+  },
+  "output": {
+    "structure": {
+      "timestamp-format": "YYYY-MM-DD_HH-mm-ss",
+      "directories": ["content", "source-of-truth", "logs"]
+    },
+    "files": {
+      "content": [
+        "tools.json",
+        "new.md",
+        "{tool-name}.md",
+        "{tool-name}-partial.md",
+        "index.yml",
+        "TOC.yml",
+        "supported-azure-services.md"
+      ],
+      "source-of-truth": [
+        "azmcp-commands.md",
+        "tools.json",
+        "app-configuration.md",
+        "azure-cli-extension.md",
+        "azure-native-isv.md",
+        "global-parameters-list.md"
+      ],
+      "logs": ["azmcp.log"]
+    }
+  },
+  "content-rules": {
+    "example-prompts": {
+      "count": 5,
+      "variety": ["question", "statement", "incomplete", "verbose"],
+      "format": "- **{purpose}**: \"{prompt}\"",
+      "placement": "before-parameters"
+    },
+    "parameters": {
+      "format": "Required or Optional",
+      "exclude-global": true,
+      "no-headers": true
+    },
+    "headers": {
+      "case": "sentence",
+      "html-comments": true,
+      "no-h3-for": ["Parameters", "Example prompts"]
+    },
+    "links": {
+      "type": "relative",
+      "exclude-language-codes": true,
+      "format": "../{path}"
+    },
+    "markdown": {
+      "bullets": "dash",
+      "no-prerequisites": true,
+      "no-ms-custom-build": true
+    }
+  },
+  "validation-rules": {
+    "content": {
+      "min-example-prompts": 5,
+      "max-landing-page-tools": 4,
+      "required-sections": ["related-content"],
+      "example-format": "bold-summary-without-quotes"
+    },
+    "structure": {
+      "h2-sections": ["command-operations"],
+      "h3-avoid": ["Parameters", "Example prompts"],
+      "html-comments": "exact-command-syntax"
+    }
+  },
+  "tool-categorization": {
+    "new-tool": {
+      "condition": "exists in azmcp-commands.md but not in tools.json",
+      "action": "create-full-documentation",
+      "marker": "NEW TOOL CATEGORY"
+    },
+    "new-operation": {
+      "condition": "tool exists but operation new",
+      "action": "create-partial-documentation",
+      "marker": "NEW OPERATIONS"
+    },
+    "third-party": {
+      "condition": "server is azure-native-isv",
+      "branding": "use-third-party-only"
+    },
+    "subcategories": {
+      "condition": "has subcategories in azmcp-commands",
+      "format": "Subcategory: Toolname"
+    }
+  },
+  "automation": {
+    "change-detection": {
+      "watch-files": ["create-docs.prompt.md"],
+      "detect": ["configuration", "rules", "workflow", "sources"]
+    },
+    "module-mapping": {
+      "data-extractors": ["sources"],
+      "content-builders": ["content-rules", "example-prompts"],
+      "template-processors": ["templates", "headers"],
+      "quality-controllers": ["validation-rules"],
+      "navigation-generators": ["output.files.content"]
+    }
+  }
+}
