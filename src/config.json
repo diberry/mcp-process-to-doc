@@ -1,0 +1,44 @@
+{
+  "azure": {
+    "enabled": true,
+    "timeout": 30000,
+    "retryAttempts": 3,
+    "subscriptionId": null,
+    "tenantId": null
+  },
+  "output": {
+    "baseDirectory": "./generated",
+    "createTimestampedDirs": true,
+    "backupExisting": true,
+    "validateOutput": true,
+    "fileExtension": ".md",
+    "encoding": "utf8"
+  },
+  "templates": {
+    "baseDirectory": "./templates",
+    "defaultTemplate": "azure-tool",
+    "customTemplates": {}
+  },
+  "processing": {
+    "maxConcurrency": 5,
+    "batchSize": 10,
+    "enableParallelProcessing": true,
+    "continueOnError": false
+  },
+  "quality": {
+    "enableValidation": true,
+    "enableFormatChecking": true,
+    "enableLinkValidation": false,
+    "enableConsistencyChecking": true,
+    "enableReferenceValidation": true
+  },
+  "source": {
+    "toolsJsonPath": "./tools.json",
+    "commandsPath": "./azmcp-commands.md"
+  },
+  "logging": {
+    "level": "info",
+    "enableFileLogging": true,
+    "enableConsoleLogging": true
+  }
+}

@@ -83,13 +83,13 @@ fi
 # Update navigation files
 log "Updating navigation files"
 log "Updating TOC.yml"
-node src/update-toc.js || warning "Failed to update TOC.yml"
+node src/navigation-generators/update-toc.js || warning "Failed to update TOC.yml"
 
 log "Updating index.yml"
-node src/update-index.js || warning "Failed to update index.yml"
+node src/navigation-generators/update-index.js || warning "Failed to update index.yml"
 
 log "Updating supported-azure-services.md"
-node src/update-supported-services.js || warning "Failed to update supported-azure-services.md"
+node src/navigation-generators/update-supported-services.js || warning "Failed to update supported-azure-services.md"
 
 # Even if some navigation files fail to update, consider this step a success
 # as we can manually fix the navigation files later

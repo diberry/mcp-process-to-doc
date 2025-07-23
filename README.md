@@ -56,9 +56,9 @@ All scripts are located in the `src` directory. See [src/README.md](src/README.m
 
 ### Navigation Update Scripts
 
-- **update-toc.js**: Updates the TOC.yml file with entries for new tools
-- **update-index.js**: Updates the index.yml landing page with links to new tools
-- **update-supported-services.js**: Updates the supported-azure-services.md file with new tools
+- **navigation-generators/update-toc.js**: Updates the TOC.yml file with entries for new tools
+- **navigation-generators/update-index.js**: Updates the index.yml landing page with links to new tools
+- **navigation-generators/update-supported-services.js**: Updates the supported-azure-services.md file with new tools
 
 ## Usage
 

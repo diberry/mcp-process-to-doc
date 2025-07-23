@@ -28,6 +28,33 @@ If you need to run a cli command or a series of commands, create a bash script, 
 
 If you need a programming language, prefer JavaScript. Use the `run_javascript` tool to run the JavaScript code.
 
+## Sources of truth 
+
+Base your generated work on the following sources of truth which should be copied into the current source-of-truth folder:
+
+- Engineering information:
+    - List of tools in `azmcp-commands.md` at [URL](https://github.com/Azure/azure-mcp/blob/main/docs/azmcp-commands.md)
+    - Example prompts in `e2eTestPrompts.md` at [URL](https://github.com/Azure/azure-mcp/blob/main/e2eTests/e2eTestPrompts.md)
+    - Description of tool and parameters in `./src/Areas/<tool area>/Commands/<command>/<operation>Command.cs` in the `Description` property. A few examples of this include:
+        - [App config command description account list commands](https://github.com/Azure/azure-mcp/blob/main/src/Areas/AppConfig/Commands/Account/AccountListCommand.cs#L21)
+        - [Native ISV Datadog command description for monitored resources list](https://github.com/Azure/azure-mcp/blob/main/src/Areas/AzureIsv/Commands/Datadog/MonitoredResourcesListCommand.cs#L22)
+- Documentation inforamation: 
+    - Published `tools.json` at [URL](https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/tools/tools.json)
+    - Published tool articles:
+        - tool article for [App config](https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/tools/app-configuration.md)
+        - tool article for [Datadog](https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/tools/azure-native-isv.md)
+        - tool article for [Postgresql](https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/tools/postgresql.md)
+    - Published navigation articles:
+        - [TOC](https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/TOC.yml)
+        - [Supported tools](https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/includes/tools/supported-azure-services.md)
+
+## Templates
+
+Templates are provided at the root of this repo to provide an explicit format for generated files. Don't provide text or formatting not explicitly stated in these templates for the generated content.
+
+- `new.template.md`
+- `generated-documentation.template.md`
+
 ## File generation
 
 1. Create a new directory inside the `./generated` folder with a timestamp in the name, such as `2025-07-17_14-00-00`, to store the new documentation files. Update the `./generated/current.log` file with the name of this new directory. This will be used to track the current `<timestamp>` directory you are working on.
@@ -51,6 +78,10 @@ At the end of this entire file's process, you should have the following files wi
 - in the `./generated/<timestamp>/source-of-truth` directory:
     - `azmcp-commands.md` - the source of truth for the tools and operations provided by the engineering team
     - `tools.json` - the updated tools.json file with the new tools and operations added
+    - `app-configuration.md` - the source of truth for the app configuration tool documentation found at this [URL](https://github.com/MicrosoftDocs/azure-dev-docs/blob/main/articles/azure-mcp-server/tools/app-configuration.md) - this is a single Azure service mcp tool with operation
+    - `azure-cli-extension.md` - the source of truth for the Azure CLI extension tool documentation found at this [URL](https://github.com/MicrosoftDocs/azure-dev-docs/blob/main/articles/azure-mcp-server/tools/azure-cli-extension.md) - this is an example of a tool that covers several underlying CLI applications
+    - `azure-native-isv.md` - the source of truth for the Azure Native ISV tool documentation found at this [URL](https://github.com/MicrosoftDocs/azure-dev-docs/blob/main/articles/azure-mcp-server/tools/azure-native-isv.md) - this is an example of a tool that covers several underlying 3rd party services where each service is a tool operation category with operations inside the category
+    - `global-parameters-list.md` - the source of truth for the [global parameters](https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/includes/tools/global-parameters-list.md) used in the MCP server tools documentation - these files should be mentioned in the generated documentation for the tools files. 
 - in the `./generated/<timestamp>/logs` directory:
     - `azmcp.log` - a log file that contains any issues or errors encountered during the process - any reasoning, questions, or issues you encountered during the process should be logged here.
 
@@ -140,6 +171,12 @@ Create a `new.md` file to communicate to engineering what the list of new or upd
 
 ## Create local documentation
 
+Goals: 
+- focus on user prompts and their parameters. Do not include information about how to use the tool programmatically. The tool command such as `azmcp aks cluster list --subscription` should be in the documentation file only as an http comment and not as displayed text. The focus for this user documentation is on the user prompts and parameters, not the tool command itself.
+- create new documentation files for each new tool and operation in the `./generated/<timestamp>/content` directory following existing formatted files in the production documentation repository.
+- only generate, edit, and review and edit the current documentation files as noted in the `./generated/current.log` file.
+
+
 1. Take the new entries in the local tools.json to create a new file documentation file for each new server in the tools.json. Place those files in a timestamped directory. Follow the format of the azure-app-configuration.md at this [URL](https://github.com/MicrosoftDocs/azure-dev-docs/blob/main/articles/azure-mcp-server/tools/app-configuration.md) to create each new server's doc file. Notice any relative or absolute links in the app-configuration.md file that you should mimic in the new files.
 1. Find each new tool's primary documentation page on Microsoft Learn, if it exists, and add the documentation URL to the new entry in the tools.json file. If it doesn't exist, leave the documentation URL blank. Use this documentation to understand branding and terminology specific to this tool that should be used in the documentation file for the MCP server you generate. Neither the azmcp-commands.md nor the tools.json has the branding information required to create the new documentation files. Use the branding information from the existing documentation files in this workspace to create the new documentation files. Use the Azure Learn knowledge service tool to get that important branding information.
 1. For the `azmcp extension` tool, each operation such as `azd` or `azd` should have their own documentation file. Use the existing documentation files in this workspace as a guide for how to create these new documentation files. It should also have its own entry in the TOC and Index files. 
@@ -161,16 +198,26 @@ To create example prompts for the new documentation files, follow these steps:
     - **Purge config**: "Delete the temporary API key 'TempAuth' from app-config-dev"
     ```
 
+- Create the example prompts so they use a variety of questions, statements, incomplete sentences, verbose sentences, and usage of all or some parameters.
+
 Additional regulations for documentation generation: 
 
+1. The documentation file shouldn't include a prerequisites section for each tool doesn't have a prereqs section. Do not add one. 
 1. For any new tools in existing servers, create the markdown files with just the new information in the correct mcp server format using the app configuration as an example - so I can copy/paste it into the existing document which isn't in this workspace. Name the file with a postfix of `-partial` so I know it isn't the whole file.
 2. If a tool is specific to a 3rd party but the server is Azure Native ISV, use the 3rd party tool branding only in that tool's section. Datadog is an example of this. The server name should be azure-native-isv and the tool name should be the 3rd party name, like `datadog` in this case.
-3. If a tool has subcategories as identified as an H4 name in the azmcp-commands.md file, like Azure Monitor Operations as the H3, then Log Analytics as the H4, then use subcategory as the tool name, like `Subcategory: Toolname` such as `Log Analytics: list workspaces`.
+3. If a tool has subcategories in the azmcp-commands.md file, (like Azure Monitor Operations has Log Analytics, Health Models, and Metrics), then use subcategory as the tool name, like `Subcategory: Toolname` such as `Log Analytics: list workspaces`.
 4. If the tool has examples for parameters denoted with `# Examples:`, create prompts that are similar to the examples in the azmcp-commands.md file so the reader understands how to use the parameters. Make sure the final examples in the new files use natural language for the example values instead of syntactic or semantical provided examples. Use the same format as the app-configuration.md file for the prompts.
-5. Make sure any H2s for tools with example prompts include an HTML comment which is the exact text from azmcp-commands.md file that correspond to that H2. Make sure all H2s or H3s are sentence case. 
+5. Make sure each H2 section (which represents a tool command) includes an HTML comment containing the exact command syntax from the azmcp-commands.md file. This creates a traceable link between the engineering command and the user documentation. The HTML comment should not be visible in the rendered documentation. Make sure all H2s or H3s use sentence case formatting.
 6. Ensure all links to Learn documentation is relative and not absolute. For example, use `../get-started.md` instead of `https://learn.microsoft.com/en-us/azure/mcp-server/get-started.md`. Any URLs which aren't in `/azure/developer` need a non-relative and non-absolutepath such as `/azure/...`. It also must not include the language code like `en-us` in the URL. It should be relative to the current file. Test the links to ensure they work correctly.
 7. Make sure the markdown bullets use `-` (dash). 
 8. You don't need to add ms.custom for build 2025 as that is a past event. It is not needed for the new files.
+9. Don't duplicate parameters in the documentation files which are already included in the main parameters file in this [URL](https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/includes/tools/global-parameters-list.md). 
+10. Create the last H2 of the tool file to be related content. This should include links to the MCP server tools index, get started, and any related content that is relevant to the tool. Use the same format as the app-configuration.md file for the related content section.
+11. No H3 headings for "Parameters" or "Example prompts" sections
+12. All example prompts follow the bold summary format without quotes
+13. Parameters are marked with "Required" or "Optional" (not "Yes" or "No")
+14. Example prompts section appears BEFORE parameters table
+
 
 ## Navigation updates
 
