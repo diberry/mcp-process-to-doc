@@ -58,12 +58,19 @@ npm run debug-config
 ```
 **Technical Operation**: Executes direct prompt parsing without change detection or modification operations. Displays raw extracted configuration objects (sources, content rules, validation rules) in formatted JSON output for inspection. Runs integrity validation and reports discrepancies between current configuration and parsed prompt state. Provides immediate feedback on prompt parsing accuracy and configuration synchronization status without generating logs or making changes.
 
+### Convert Prompt to JSON
+```bash
+npm run unified-convert path/to/prompt.md [options]
+```
+**Technical Operation**: Converts a markdown prompt file to structured JSON using npm packages (markdown-it and gray-matter) with comprehensive TypeScript interfaces. Supports validation against JSON schema, comparison with previous versions, and detailed output. Features include automatic SHA-256 hashing, frontmatter extraction, and intelligent section parsing.
+
 ## Workflow
 
 1. **Make changes to `create-docs.prompt.md`**
-2. **Run analysis**: `npm run analyze-prompt-changes`
-3. **Apply updates**: `npm run apply-prompt-updates` 
-4. **Validate**: `npm run validate-integration`
+2. **Convert to structured JSON**: `npm run unified-convert create-docs.prompt.md --validate`
+3. **Run analysis**: `npm run analyze-prompt-changes`
+4. **Apply updates**: `npm run apply-prompt-updates` 
+5. **Validate**: `npm run validate-integration`
 
 ## Configuration
 

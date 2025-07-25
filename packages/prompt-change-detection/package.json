@@ -6,14 +6,17 @@
   "bin": {
     "analyze-prompt-changes": "./src/cli/analyze-prompt-changes.js",
     "apply-prompt-updates": "./src/cli/apply-prompt-updates.js",
-    "validate-integration": "./src/cli/validate-integration.js"
+    "validate-integration": "./src/cli/validate-integration.js",
+    "convert-prompt": "./src/cli/markdown-converter-cli.js"
   },
   "scripts": {
     "analyze": "node src/cli/analyze-prompt-changes.js",
     "apply": "node src/cli/apply-prompt-updates.js",
     "validate": "node src/cli/validate-integration.js",
+    "convert": "node src/cli/markdown-converter-cli.js",
     "sync": "npm run analyze && npm run apply",
-    "full-validation": "npm run validate"
+    "full-validation": "npm run validate",
+    "start": "npm run convert ../../create-docs.prompt.md --validate && npm run sync && npm run validate"
   },
   "keywords": [
     "mcp",
@@ -26,6 +29,8 @@
   "license": "MIT",
   "dependencies": {
     "fs": "^0.0.1-security",
+    "gray-matter": "^4.0.3",
+    "markdown-it": "^14.1.0",
     "path": "^0.12.7"
   },
   "engines": {

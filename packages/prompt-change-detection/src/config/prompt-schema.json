@@ -1,0 +1,513 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Azure MCP Documentation Prompt Schema",
+  "description": "Structured representation of the create-docs.prompt.md file for automated processing",
+  "type": "object",
+  "required": [
+    "metadata",
+    "goal",
+    "sources",
+    "templates",
+    "fileGeneration",
+    "contentRules",
+    "navigationRules"
+  ],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["title", "description", "version", "lastModified", "sha256"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The prompt file title"
+        },
+        "description": {
+          "type": "string", 
+          "description": "Brief description of prompt purpose"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Semantic version of the prompt"
+        },
+        "lastModified": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of last modification"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 hash of the original markdown content"
+        }
+      }
+    },
+    "goal": {
+      "type": "object",
+      "required": ["primary", "repositories", "workflow"],
+      "properties": {
+        "primary": {
+          "type": "string",
+          "description": "Primary objective statement"
+        },
+        "repositories": {
+          "type": "object",
+          "required": ["engineering", "documentation"],
+          "properties": {
+            "engineering": {
+              "type": "object",
+              "required": ["url", "description"],
+              "properties": {
+                "url": {"type": "string", "format": "uri"},
+                "description": {"type": "string"}
+              }
+            },
+            "documentation": {
+              "type": "object", 
+              "required": ["live", "repository"],
+              "properties": {
+                "live": {
+                  "type": "object",
+                  "required": ["url", "description"],
+                  "properties": {
+                    "url": {"type": "string", "format": "uri"},
+                    "description": {"type": "string"}
+                  }
+                },
+                "repository": {
+                  "type": "object",
+                  "required": ["url", "description"],
+                  "properties": {
+                    "url": {"type": "string", "format": "uri"},
+                    "description": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "workflow": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "High-level workflow steps"
+        }
+      }
+    },
+    "tools": {
+      "type": "object",
+      "required": ["recommended", "priorities"],
+      "properties": {
+        "recommended": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "purpose", "usage"],
+            "properties": {
+              "name": {"type": "string"},
+              "purpose": {"type": "string"},
+              "usage": {"type": "string"}
+            }
+          }
+        },
+        "priorities": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Tool usage priorities"
+        }
+      }
+    },
+    "sources": {
+      "type": "object",
+      "required": ["engineering", "documentation"],
+      "properties": {
+        "engineering": {
+          "type": "object",
+          "required": ["commands", "examples", "descriptions"],
+          "properties": {
+            "commands": {
+              "type": "object",
+              "required": ["url", "format", "purpose"],
+              "properties": {
+                "url": {"type": "string", "format": "uri"},
+                "format": {"type": "string"},
+                "purpose": {"type": "string"}
+              }
+            },
+            "examples": {
+              "type": "object",
+              "required": ["url", "format", "purpose"],
+              "properties": {
+                "url": {"type": "string", "format": "uri"},
+                "format": {"type": "string"},
+                "purpose": {"type": "string"}
+              }
+            },
+            "descriptions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["pattern", "examples"],
+                "properties": {
+                  "pattern": {"type": "string"},
+                  "examples": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["name", "url"],
+                      "properties": {
+                        "name": {"type": "string"},
+                        "url": {"type": "string", "format": "uri"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "documentation": {
+          "type": "object",
+          "required": ["toolsJson", "articles", "navigation"],
+          "properties": {
+            "toolsJson": {
+              "type": "object",
+              "required": ["url", "purpose"],
+              "properties": {
+                "url": {"type": "string", "format": "uri"},
+                "purpose": {"type": "string"}
+              }
+            },
+            "articles": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "url", "purpose"],
+                "properties": {
+                  "name": {"type": "string"},
+                  "url": {"type": "string", "format": "uri"},
+                  "purpose": {"type": "string"}
+                }
+              }
+            },
+            "navigation": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "url", "purpose"],
+                "properties": {
+                  "name": {"type": "string"},
+                  "url": {"type": "string", "format": "uri"},
+                  "purpose": {"type": "string"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "templates": {
+      "type": "object",
+      "required": ["files", "usage"],
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "purpose"],
+            "properties": {
+              "name": {"type": "string"},
+              "purpose": {"type": "string"}
+            }
+          }
+        },
+        "usage": {
+          "type": "string",
+          "description": "Template usage instructions"
+        }
+      }
+    },
+    "fileGeneration": {
+      "type": "object",
+      "required": ["structure", "workflow", "outputFiles"],
+      "properties": {
+        "structure": {
+          "type": "object",
+          "required": ["baseDirectory", "timestampFormat", "subdirectories"],
+          "properties": {
+            "baseDirectory": {"type": "string"},
+            "timestampFormat": {"type": "string"},
+            "subdirectories": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "purpose"],
+                "properties": {
+                  "name": {"type": "string"},
+                  "purpose": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "workflow": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "File generation workflow steps"
+        },
+        "outputFiles": {
+          "type": "object",
+          "required": ["content", "sourceOfTruth", "logs"],
+          "properties": {
+            "content": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "purpose"],
+                "properties": {
+                  "name": {"type": "string"},
+                  "purpose": {"type": "string"}
+                }
+              }
+            },
+            "sourceOfTruth": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "source", "purpose"],
+                "properties": {
+                  "name": {"type": "string"},
+                  "source": {"type": "string", "format": "uri"},
+                  "purpose": {"type": "string"}
+                }
+              }
+            },
+            "logs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "purpose"],
+                "properties": {
+                  "name": {"type": "string"},
+                  "purpose": {"type": "string"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "contentRules": {
+      "type": "object",
+      "required": ["toolsJson", "documentation", "examplePrompts", "formatting"],
+      "properties": {
+        "toolsJson": {
+          "type": "object",
+          "required": ["structure", "categorization", "comparison"],
+          "properties": {
+            "structure": {
+              "type": "object",
+            "required": ["rootProperty", "operationsArray", "example"],
+              "properties": {
+                "rootProperty": {"type": "string"},
+                "operationsArray": {"type": "string"},
+                "example": {"type": "object"}
+              }
+            },
+            "categorization": {
+              "type": "object",
+              "required": ["newTool", "newOperation", "existing"],
+              "properties": {
+                "newTool": {"type": "string"},
+                "newOperation": {"type": "string"},
+                "existing": {"type": "string"}
+              }
+            },
+            "comparison": {
+              "type": "object",
+              "required": ["process", "statusField"],
+              "properties": {
+                "process": {"type": "string"},
+                "statusField": {"type": "string"}
+              }
+            }
+          }
+        },
+        "documentation": {
+          "type": "object",
+          "required": ["focus", "commandVisibility", "grouping", "branding"],
+          "properties": {
+            "focus": {"type": "string"},
+            "commandVisibility": {"type": "string"},
+            "grouping": {
+              "type": "object",
+              "required": ["priorities", "family"],
+              "properties": {
+                "priorities": {"type": "string"},
+                "family": {"type": "string"}
+              }
+            },
+            "branding": {
+              "type": "object",
+              "required": ["thirdParty", "subcategories"],
+              "properties": {
+                "thirdParty": {"type": "string"},
+                "subcategories": {"type": "string"}
+              }
+            }
+          }
+        },
+        "examplePrompts": {
+          "type": "object",
+          "required": ["sources", "format", "variety", "guidelines"],
+          "properties": {
+            "sources": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "format": {
+              "type": "object",
+              "required": ["structure", "bulletStyle", "summaryStyle"],
+              "properties": {
+                "structure": {"type": "string"},
+                "bulletStyle": {"type": "string"},
+                "summaryStyle": {"type": "string"}
+              }
+            },
+            "variety": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "guidelines": {
+              "type": "array",
+              "items": {"type": "string"}
+            }
+          }
+        },
+        "formatting": {
+          "type": "object",
+          "required": ["prerequisites", "parameters", "headers", "links", "markdown"],
+          "properties": {
+            "prerequisites": {"type": "boolean"},
+            "parameters": {
+              "type": "object",
+              "required": ["excludeGlobal", "requiredFormat"],
+              "properties": {
+                "excludeGlobal": {"type": "boolean"},
+                "requiredFormat": {"type": "string"}
+              }
+            },
+            "headers": {
+              "type": "object",
+              "required": ["case", "htmlComments", "restrictions"],
+              "properties": {
+                "case": {"type": "string"},
+                "htmlComments": {"type": "boolean"},
+                "restrictions": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                }
+              }
+            },
+            "links": {
+              "type": "object",
+              "required": ["type", "excludeLanguageCodes", "pathFormat"],
+              "properties": {
+                "type": {"type": "string"},
+                "excludeLanguageCodes": {"type": "boolean"},
+                "pathFormat": {"type": "string"}
+              }
+            },
+            "markdown": {
+              "type": "object",
+              "required": ["bullets", "customFields"],
+              "properties": {
+                "bullets": {"type": "string"},
+                "customFields": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "navigationRules": {
+      "type": "object",
+      "required": ["files", "landingPage", "ordering"],
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "url", "purpose"],
+            "properties": {
+              "name": {"type": "string"},
+              "url": {"type": "string", "format": "uri"},
+              "purpose": {"type": "string"}
+            }
+          }
+        },
+        "landingPage": {
+          "type": "object",
+          "required": ["maxTools", "ordering"],
+          "properties": {
+            "maxTools": {"type": "integer"},
+            "ordering": {"type": "string"}
+          }
+        },
+        "ordering": {"type": "string"}
+      }
+    },
+    "editorialReview": {
+      "type": "object",
+      "required": ["process", "criteria"],
+      "properties": {
+        "process": {"type": "string"},
+        "criteria": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "validationRules": {
+      "type": "object",
+      "required": ["content", "structure", "compliance"],
+      "properties": {
+        "content": {
+          "type": "object",
+          "required": ["maxLandingPageTools", "exampleFormat", "parameterFormat"],
+          "properties": {
+            "maxLandingPageTools": {"type": "integer"},
+            "exampleFormat": {"type": "string"},
+            "parameterFormat": {"type": "string"}
+          }
+        },
+        "structure": {
+          "type": "object",
+          "required": ["h3Avoid", "examplePromptsPlacement"],
+          "properties": {
+            "h3Avoid": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "examplePromptsPlacement": {"type": "string"}
+          }
+        },
+        "compliance": {
+          "type": "object",
+          "required": ["backupPolicy", "requiredSections"],
+          "properties": {
+            "backupPolicy": {"type": "string"},
+            "requiredSections": {
+              "type": "array",
+              "items": {"type": "string"}
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -26,6 +26,7 @@
     "analyze-prompt-changes": "node packages/prompt-change-detection/src/cli/analyze-prompt-changes.js",
     "apply-prompt-updates": "node packages/prompt-change-detection/src/cli/apply-prompt-updates.js",
     "validate-integration": "node packages/prompt-change-detection/src/cli/validate-integration.js",
+    "convert-prompt": "node packages/prompt-change-detection/src/cli/convert-prompt.js",
     "debug-config": "node packages/prompt-change-detection/src/cli/debug-config.js",
     "sync-prompt-to-code": "npm run analyze-prompt-changes && npm run apply-prompt-updates",
     "full-validation": "npm run validate-integration"
