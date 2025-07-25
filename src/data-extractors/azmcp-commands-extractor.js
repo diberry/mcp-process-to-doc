@@ -3,6 +3,8 @@
  * 
  * This module provides robust parsing of azmcp-commands.md to extract
  * detailed command information including parameters, descriptions, and examples.
+ * 
+ * Source URL: https://github.com/Azure/azure-mcp/blob/main/docs/azmcp-commands.md
  */
 
 const fs = require('fs');

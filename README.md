@@ -62,8 +62,16 @@ All scripts are located in the `src` directory. See [src/README.md](src/README.m
 
 ## Usage
 
+### Documentation Generation (Using the System)
+
+**Purpose**: Generate actual documentation files (without changes to prompt) for Azure MCP tools  
+**When**: You want to discover new tools and create documentation  
+**Commands**: `npm run run-all` (and the individual scripts)
+
+Run the full documentation generation pipeline:
+
 ```bash
-# Run the full pipeline
+# Run the full pipeline (automatically creates new timestamped directory)
 npm run run-all
 
 # Or run individual scripts as needed
@@ -74,6 +82,32 @@ npm run generate-all-docs
 npm run update-toc
 npm run update-index
 npm run update-supported-services
+```
+
+#### Starting a Fresh Generation
+
+Each run of `npm run run-all` automatically creates a new timestamped directory (e.g., `generated/2025-07-25_14-30-00/`) and preserves previous results. 
+
+**For a completely fresh start:**
+- **Recommended**: Simply run `npm run run-all` - it handles everything automatically
+- **Manual control**: Update `generated/current.log` with a new timestamp, then run `npm run run-all`
+- **Clean slate**: Move or archive the `generated/` directory, then run `npm run run-all`
+
+### Prompt-to-Code Integration (Updating the System)
+
+When you need to modify how the documentation generation works by updating `create-docs.prompt.md`:
+
+```bash
+1. Update prompt with new requirement
+1. `npm run analyze-prompt-changes`
+1. `npm run apply-prompt-updates`
+1. `npm run validate-integration`
+```
+
+**Or use the shortcut:**
+```bash
+npm run sync-prompt-to-code      # Steps 2-3 combined
+npm run full-validation          # Step 4
 ```
 
 ## Output

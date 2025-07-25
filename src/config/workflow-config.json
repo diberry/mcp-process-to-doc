@@ -7,21 +7,21 @@
   "sources": {
     "engineering": {
       "azmcp-commands": "https://github.com/Azure/azure-mcp/blob/main/docs/azmcp-commands.md",
-      "e2e-test-prompts": "https://github.com/Azure/azure-mcp/blob/main/e2eTests/e2eTestPrompts.md",
-      "command-descriptions": "https://github.com/Azure/azure-mcp/blob/main/src/Areas/{area}/Commands/{command}/{operation}Command.cs"
+      "e2e-test-prompts": "https://github.com/Azure/azure-mcp/blob/main/e2eTests/e2eTestPrompts.md"
     },
     "documentation": {
-      "tools-json": "https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/tools/tools.json",
       "examples": {
         "app-config": "https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/tools/app-configuration.md",
-        "azure-cli": "https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/tools/azure-cli-extension.md",
-        "datadog": "https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/tools/azure-native-isv.md"
+        "datadog": "https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/tools/azure-native-isv.md",
+        "postgresql": "https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/tools/postgresql.md",
+        "supported-tools": "https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/includes/tools/supported-azure-services.md",
+        "url": "https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/includes/tools/global-parameters-list.md",
+        "global-parameters": "https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/includes/tools/global-parameters-list.md",
+        "app-configuration-md": "https://github.com/MicrosoftDocs/azure-dev-docs/blob/main/articles/azure-mcp-server/tools/app-configuration.md",
+        "mcp-available-server-tools-include": "https://github.com/MicrosoftDocs/azure-dev-docs/blob/main/articles/azure-mcp-server/includes/tools/supported-azure-services.md"
       },
-      "navigation": {
-        "toc": "https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/TOC.yml",
-        "index": "https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/index.yml",
-        "supported-services": "https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/includes/tools/supported-azure-services.md"
-      }
+      "navigation": {},
+      "tools-json": "https://github.com/MicrosoftDocs/azure-dev-docs-pr/blob/main/articles/azure-mcp-server/tools/tools.json"
     }
   },
   "templates": {
@@ -57,29 +57,22 @@
   "content-rules": {
     "example-prompts": {
       "count": 5,
-      "variety": ["question", "statement", "incomplete", "verbose"],
-      "format": "- **{purpose}**: \"{prompt}\"",
-      "placement": "before-parameters"
+      "variety": ["question", "statement", "incomplete", "verbose"]
     },
     "parameters": {
-      "format": "Required or Optional",
-      "exclude-global": true,
-      "no-headers": true
+      "exclude-global": true
     },
     "headers": {
       "case": "sentence",
-      "html-comments": true,
-      "no-h3-for": ["Parameters", "Example prompts"]
+      "html-comments": true
     },
     "links": {
       "type": "relative",
-      "exclude-language-codes": true,
-      "format": "../{path}"
+      "exclude-language-codes": true
     },
     "markdown": {
       "bullets": "dash",
-      "no-prerequisites": true,
-      "no-ms-custom-build": true
+      "no-prerequisites": true
     }
   },
   "validation-rules": {
@@ -87,12 +80,28 @@
       "min-example-prompts": 5,
       "max-landing-page-tools": 4,
       "required-sections": ["related-content"],
-      "example-format": "bold-summary-without-quotes"
+      "example-format": "bold-summary-without-quotes",
+      "example-variety": ["question", "statement", "incomplete", "verbose"],
+      "parameter-format": "Required or Optional",
+      "no-prerequisites": true,
+      "html-comments": "exact-command-syntax"
     },
     "structure": {
       "h2-sections": ["command-operations"],
       "h3-avoid": ["Parameters", "Example prompts"],
-      "html-comments": "exact-command-syntax"
+      "html-comments": "exact-command-syntax",
+      "headers-case": "sentence",
+      "example-prompts-before-parameters": true
+    },
+    "links": {
+      "relative-only": true,
+      "no-language-codes": true,
+      "azure-developer-relative": true,
+      "non-azure-developer-absolute": "/azure/{path}"
+    },
+    "markdown": {
+      "bullets": "dash",
+      "no-ms-custom-build": true
     }
   },
   "tool-categorization": {

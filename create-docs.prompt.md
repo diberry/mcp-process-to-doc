@@ -176,6 +176,10 @@ Goals:
 - create new documentation files for each new tool and operation in the `./generated/<timestamp>/content` directory following existing formatted files in the production documentation repository.
 - only generate, edit, and review and edit the current documentation files as noted in the `./generated/current.log` file.
 
+Guidance on content arrangement and grouping: 
+- Prioritize independent tools and services, for example:
+    - Even though Azure Developer CLI and Azure CLI are both part of the cli extension family, because they are independent of each other (considering branding and usage), they should have their own independent articles. 
+- When commands are within a branded tool family, all commands should be on a single article, grouped by tool. An example of this is key vault with its three separate areas of keys, secrets, and certificates. Group by area but stay on the same page. 
 
 1. Take the new entries in the local tools.json to create a new file documentation file for each new server in the tools.json. Place those files in a timestamped directory. Follow the format of the azure-app-configuration.md at this [URL](https://github.com/MicrosoftDocs/azure-dev-docs/blob/main/articles/azure-mcp-server/tools/app-configuration.md) to create each new server's doc file. Notice any relative or absolute links in the app-configuration.md file that you should mimic in the new files.
 1. Find each new tool's primary documentation page on Microsoft Learn, if it exists, and add the documentation URL to the new entry in the tools.json file. If it doesn't exist, leave the documentation URL blank. Use this documentation to understand branding and terminology specific to this tool that should be used in the documentation file for the MCP server you generate. Neither the azmcp-commands.md nor the tools.json has the branding information required to create the new documentation files. Use the branding information from the existing documentation files in this workspace to create the new documentation files. Use the Azure Learn knowledge service tool to get that important branding information.
