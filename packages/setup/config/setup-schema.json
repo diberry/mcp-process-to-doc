@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Generated Directory Structure",
+  "type": "object",
+  "$defs": {
+    "directoryNamePattern": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_<->]+$"
+    },
+    "definitions": {
+      "directory": {
+        "type": "object",
+        "description": "A directory object.",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Purpose of the directory."
+          },
+          "children": {
+            "type": "object",
+            "description": "Subdirectories within this directory.",
+            "patternProperties": {
+              "^[a-zA-Z0-9_<->]+$": {
+                "$ref": "#/definitions/directory"
+              }
+            },
+            "additionalProperties": false
+          },
+          "files": {
+            "type": "object",
+            "description": "Files within this directory as key-value pairs where the key is the file name and the value is the description.",
+            "patternProperties": {
+              "^[a-zA-Z0-9_<->]+$": {
+                "type": "string",
+                "description": "Description of the file."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "description"
+        ]
+      }
+    },
+    "properties": {
+      "children": {
+        "type": "object",
+        "description": "Root directories and their subdirectories.",
+        "patternProperties": {
+          "^[a-zA-Z0-9_<->]+$": {
+            "$ref": "#/definitions/directory"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "required": [
+      "children"
+    ]
+  }
+}

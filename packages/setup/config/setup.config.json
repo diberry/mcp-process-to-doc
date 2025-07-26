@@ -1,0 +1,52 @@
+{
+    "children": {
+        "Generated": {
+            "description": "Store all files created or modified during the documentation process.",
+            "children": {
+                "<timestamp>": {
+                    "description": "Timestamped directory for organizing files by process instance.",
+                    "children": {
+                        "Content": {
+                            "description": "Store files created during the documentation process.",
+                            "files": {
+                                "tools.json": "Updated tools and operations.",
+                                "new.md": "List of new tools or tools with changed operations (new, updated, or removed).",
+                                "<tool-name>.md": "Documentation for new tools.",
+                                "<tool-name>-partial.md": "Documentation for new operations."
+                            }
+                        },
+                        "Source-of-Truth": {
+                            "description": "Store original files downloaded from sources. These files should not be edited.",
+                            "files": {
+                                "tools.json": "Original tools file from the content team.",
+                                "azmcp-commands.md": "Original tools file from the engineering team."
+                            }
+                        },
+                        "Logs": {
+                            "description": "Store logs or intermediary files created during the process.",
+                            "files": {
+                                "azmcp.log": "Log file for issues and intermediary steps.",
+                                "current.log": "Tracks the current timestamp directory being worked on."
+                            }
+                        },
+                        "Prompt": {
+                            "description": "Store JSON version of prompt file.",
+                            "files": {
+                                "setup.1.prompt.json": "Configuration file for the workflow."
+                            }
+                        },
+                        "Reports": {
+                            "description": "Store reports generated during the documentation process.",
+                            "files": {
+                                "setup.1.prompt.report.json": "Summary of changes made during the prompt.json generation process."
+                            }
+                        }
+                    }
+                }
+            },
+            "files": {
+                "current.log": "Track the current timestamp directory being worked on."
+            }
+        }
+    }
+}
