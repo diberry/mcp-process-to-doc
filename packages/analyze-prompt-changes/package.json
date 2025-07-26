@@ -1,0 +1,44 @@
+{
+  "name": "@mcp-process-to-doc/analyze-prompt-changes",
+  "version": "1.0.0",
+  "description": "Prompt-to-code integration system for MCP documentation generation",
+  "type": "module",
+  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "bin": {
+    "analyze-prompt-changes": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rimraf dist",
+    "prebuild": "npm run clean",
+    "start": "node dist/index.js",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "documentation",
+    "prompt-to-code",
+    "automation",
+    "azure"
+  ],
+  "author": "MCP Documentation Team",
+  "license": "MIT",
+  "dependencies": {
+    "gray-matter": "^4.0.3",
+    "markdown-it": "^14.1.0"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^13.0.9",
+    "@types/node": "^20.19.9",
+    "rimraf": "^5.0.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
