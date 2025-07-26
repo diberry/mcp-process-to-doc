@@ -9,7 +9,7 @@ import * as path from 'path';
 import { fileURLToPath } from 'url';
 import * as crypto from 'crypto';
 import PromptParser from './prompt-parser.js';
-import { SystemFile } from '../index.js';
+import { SystemFile } from './setup.js';
 
 // Derive __dirname for ES modules
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -116,12 +116,14 @@ export default class ChangeDetector {
     public promptParser: PromptParser;
     public changeHistoryPath: string;
     public systemFiles: Record<string, SystemFile>;
+    public timestamp: string;
 
 
-    constructor(systemFiles: Record<string, SystemFile>) {
-        this.promptParser = new PromptParser(systemFiles['prompt'].path, systemFiles['workflow-config.json'].path);
+    constructor(timestamp: string, systemFiles: Record<string, SystemFile>) {
+        this.promptParser = new PromptParser(systemFiles['prompt'].path, systemFiles['workflow-config.json'].path, systemFiles['prompt.json'].path);
         this.changeHistoryPath = systemFiles['change-history.json'].path;
         this.systemFiles = systemFiles;
+        this.timestamp = timestamp;
     }
 
     /**
@@ -134,15 +136,26 @@ export default class ChangeDetector {
 
             // Check if this is the first time through (no last known hash)
             if (!lastKnownHash) {
+                const parsedConfig = await this.promptParser.parsePrompt();
                 return {
                     hasChanges: true,
                     message: 'First-time execution: No previous hash found, assuming changes',
-                    changes: [],
+                    changes: [{
+                        type: 'initial',
+                        description: 'Entire prompt file parsed and saved',
+                        impact: 'data-extractors', // Adjusted to match the allowed type
+                        severity: 'high',
+                        details: Object.entries(parsedConfig).map(([key, value]) => ({
+                            type: 'added',
+                            key,
+                            value
+                        }))
+                    }],
                     impactAnalysis: {
-                        impactedModules: [],
+                        impactedModules: ['data-extractors/*', 'content-builders/*', 'quality-controllers/*', 'file-generators/*'],
                         updateActions: ['Initialize workflow configuration'],
                         manualReviewRequired: [],
-                        estimatedEffort: 'low',
+                        estimatedEffort: 'high',
                         autoUpdateable: true
                     }
                 };
@@ -369,7 +382,6 @@ export default class ChangeDetector {
      * Update change history with new analysis
      */
     async updateChangeHistory(newHash: string, changes: ChangeItem[]): Promise<void> {
-        const timestamp = new Date().toISOString();
         
         let history: ChangeHistoryEntry[] = [];
         try {
@@ -381,7 +393,7 @@ export default class ChangeDetector {
         }
 
         const newEntry: ChangeHistoryEntry = {
-            timestamp,
+            timestamp: this.timestamp,
             hash: newHash,
             changes,
             processed: false
@@ -391,7 +403,7 @@ export default class ChangeDetector {
 
         const updatedHistory: ChangeHistory = {
             lastHash: newHash,
-            lastAnalysis: timestamp,
+            lastAnalysis: this.timestamp,
             changes: history.slice(-10) // Keep last 10 entries
         };
 
@@ -401,7 +413,7 @@ export default class ChangeDetector {
     /**
      * Generate detailed change report
      */
-    async generateChangeReport(changeAnalysis: ChangeDetectionResult): Promise<{report: ChangeReport, reportPath: string}> {
+    async generateChangeReport(timestamp:string, reportPath: string, changeAnalysis: ChangeDetectionResult): Promise<{report: ChangeReport, reportPath: string}> {
         const { changes = [], impactAnalysis } = changeAnalysis;
 
         if (!impactAnalysis) {
@@ -410,7 +422,7 @@ export default class ChangeDetector {
 
         const report = {
             summary: {
-                timestamp: new Date().toISOString(),
+                timestamp,
                 totalChanges: changes.length,
                 estimatedEffort: impactAnalysis.estimatedEffort,
                 autoUpdateable: impactAnalysis.autoUpdateable
@@ -432,12 +444,12 @@ export default class ChangeDetector {
 
         try {
             // Save report
-            await fs.writeFile(this.systemFiles['change-report'].path, JSON.stringify(report, null, 2));
+            await fs.writeFile(reportPath, JSON.stringify(report, null, 2));
         } catch (error) {
             throw new Error(`Failed to create change report file: ${error}`);
         }
 
-        return { report, reportPath: this.systemFiles['change-report'].path };
+        return { report, reportPath };
     }
 
     /**

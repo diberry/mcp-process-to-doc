@@ -5,59 +5,23 @@
  */
 
 import { fileURLToPath } from 'url';
-import * as path from 'path';
 import ChangeDetector from './lib/change-detector.js';
-import { promises as fs } from 'node:fs';
-
-// Derive __dirname for ES modules
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-export interface SystemFile {
-    path: string;
-    access: 'read' | 'write';
-}
-
-export const systemFiles: Record<string, SystemFile> = {
-    'prompt': {
-        path: path.join(__dirname, '../../../create-docs.prompt.md'),
-        access: 'read'
-    },
-    'workflow-config.json': {
-        path: path.join(__dirname, '../../../generated/workflow/workflow-config.json'),
-        access: 'write'
-    },
-    'change-history.json': {
-        path: path.join(__dirname, '../../../generated/logs/change-history.json'),
-        access: 'write'
-    },
-    'change-report': {
-        path: path.join(__dirname, `../../../generated/reports/change-report-${Date.now()}.md`),
-        access: 'write'
-    }
-};
-
-async function ensurePathsExist(): Promise<void> {
-    for (const key in systemFiles) {
-        const filePath = systemFiles[key].path;
-        const dirPath = path.dirname(filePath);
-
-        try {
-            await fs.mkdir(dirPath, { recursive: true });
-        } catch (error) {
-            console.error(`Failed to create directory for ${key}:`, error);
-        }
-    }
-}
-
-console.log(`System files configured: ${JSON.stringify(systemFiles, null, 2)}`);
+import { timeStamp, ensurePathsExist, systemFiles } from './lib/setup.js';
+import fs from 'fs/promises';
 
 async function main(): Promise<void> {
     try {
         console.log('🔍 Azure MCP Documentation - Prompt Change Analysis');
         console.log('================================================');
 
+        const isFirstRun = !(await fs.stat(systemFiles['current'].path).catch(() => false));
+
+        if (isFirstRun) {
+            console.log('🚀 First-time execution detected. Initializing system...');
+        }
+
         await ensurePathsExist();
-        const detector = new ChangeDetector(systemFiles);
+        const detector = new ChangeDetector(timeStamp, systemFiles);
         const changeAnalysis = await detector.detectPromptChanges();
 
         if (!changeAnalysis.hasChanges) {
@@ -109,7 +73,7 @@ async function main(): Promise<void> {
         console.log('   npm run validate-integration');
 
         // Generate detailed report
-        const { reportPath } = await detector.generateChangeReport(changeAnalysis);
+        const { reportPath } = await detector.generateChangeReport(timeStamp.toString(), systemFiles['change-report'].path, changeAnalysis);
         console.log('');
         console.log(`📄 Detailed report saved: ${reportPath}`);
 

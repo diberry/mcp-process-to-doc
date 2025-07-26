@@ -158,11 +158,13 @@ export default class PromptParser {
  public promptFilePath: string;
  public configPath: string;
  public parsedContent: ParsedConfig | null;
+ public promptJsonPath: string;
 
-    constructor(promptFilePath:string, configPath:string) {
+    constructor(promptFilePath:string, configPath:string, promptJsonPath:string) {
         this.promptFilePath = promptFilePath;
         this.configPath = configPath;
         this.parsedContent = null;
+        this.promptJsonPath = promptJsonPath;
     }
 
     /**
@@ -182,6 +184,10 @@ export default class PromptParser {
             };
 
             this.parsedContent = config;
+
+            // Save parsed prompt to systemFiles['prompt.json'].path
+            await fs.writeFile(this.promptJsonPath, JSON.stringify(config, null, 2));
+
             return config;
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : String(error);
