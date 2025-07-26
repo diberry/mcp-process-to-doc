@@ -4,10 +4,156 @@
  * This module parses the prompt file and maintains synchronization with workflow-config.json
  */
 
-const fs = require('fs').promises;
-const path = require('path');
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 
-class PromptParser {
+/**
+ * Content rules type definition
+ */
+export interface ContentRules {
+    'example-prompts': {
+        count?: number;
+        variety?: string[];
+    };
+    parameters: {
+        format?: string;
+        'exclude-global'?: boolean;
+    };
+    headers: {
+        case?: string;
+        'html-comments'?: boolean;
+    };
+    links: {
+        type?: string;
+        'exclude-language-codes'?: boolean;
+    };
+    markdown: {
+        bullets?: string;
+        'no-prerequisites'?: boolean;
+    };
+}
+
+/**
+ * Validation rules type definition
+ */
+export interface ValidationRules {
+    content: {
+        'max-landing-page-tools'?: number;
+        'example-format'?: string;
+        [key: string]: any;
+    };
+    structure: {
+        'h3-avoid'?: string[];
+        'example-prompts-placement'?: string;
+        [key: string]: any;
+    };
+}
+
+/**
+ * Output structure type definition
+ */
+export interface OutputStructure {
+    structure: {
+        directories: string[];
+        'timestamp-format'?: string;
+    };
+    files: {
+        content: string[];
+        'source-of-truth': string[];
+        logs: string[];
+    };
+}
+
+/**
+ * Templates type definition
+ */
+export interface TemplateInfo {
+    primary?: string;
+    partial?: string;
+    [key: string]: string | undefined;
+}
+
+/**
+ * Sources type definition
+ */
+export interface SourceDetail {
+    name: string;
+    url: string;
+    type?: string;
+}
+
+export interface Sources {
+    engineering: Record<string, string>;
+    documentation: {
+        examples: Record<string, string>;
+        navigation: Record<string, string>;
+        [key: string]: any;
+    };
+    [key: string]: any;
+}
+
+/**
+ * Tool categorization type definition
+ */
+export interface ToolCategorization {
+    'new-tool'?: {
+        condition: string;
+        action: string;
+        marker: string;
+    };
+    'new-operation'?: {
+        condition: string;
+        action: string;
+        marker: string;
+    };
+    'third-party'?: {
+        condition: string;
+        branding: string;
+    };
+    [key: string]: any;
+}
+
+export interface ParsedConfig {
+    sources: Sources;
+    templates: TemplateInfo;
+    output: OutputStructure;
+    contentRules: ContentRules;
+    validationRules: ValidationRules;
+    toolCategorization: ToolCategorization;
+}
+
+export interface ValidatePromptResult {
+    isValid: boolean;
+    discrepancies: string[];
+    currentConfig: any; // Could be more specific but we'd need the workflow config schema
+    parsedConfig: ParsedConfig;
+}
+
+export interface WorkflowConfigChange {
+    section: string;
+    type: string;
+    old: any;
+    new: any;
+}
+
+export interface UpdateWorkflowResult {
+    success: boolean;
+    updatedConfig: any; // Could be more specific with the schema
+    changes: WorkflowConfigChange[];
+}
+
+export interface ImpactAnalysis {
+    impactedModules: string[];
+    severity: string;
+    recommendations: string[];
+}
+
+export default class PromptParser {
+
+ public promptFilePath: string;
+ public configPath: string;
+ public parsedContent: ParsedConfig | null;
+
     constructor(promptFilePath = null, configPath = null) {
         // Default to root project directory for prompt file (4 levels up from packages/prompt-change-detection/src/config/)
         this.promptFilePath = promptFilePath || path.join(__dirname, '../../../../create-docs.prompt.md');
@@ -18,11 +164,11 @@ class PromptParser {
     /**
      * Parse the prompt file and extract structured configuration
      */
-    async parsePrompt() {
+    async parsePrompt(): Promise<ParsedConfig> {
         try {
             const promptContent = await fs.readFile(this.promptFilePath, 'utf8');
             
-            const config = {
+            const config: ParsedConfig = {
                 sources: this.extractSources(promptContent),
                 templates: this.extractTemplates(promptContent),
                 output: this.extractOutputStructure(promptContent),
@@ -33,16 +179,17 @@ class PromptParser {
 
             this.parsedContent = config;
             return config;
-        } catch (error) {
-            throw new Error(`Failed to parse prompt file: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            throw new Error(`Failed to parse prompt file: ${errorMessage}`);
         }
     }
 
     /**
      * Extract source URLs from prompt
      */
-    extractSources(content) {
-        const sources = {
+    extractSources(content: string): Sources {
+        const sources: Sources = {
             engineering: {},
             documentation: { examples: {}, navigation: {} }
         };
@@ -78,8 +225,8 @@ class PromptParser {
     /**
      * Extract template information
      */
-    extractTemplates(content) {
-        const templates = {};
+    extractTemplates(content: string): TemplateInfo {
+        const templates: TemplateInfo = {};
         
         const templateMatches = content.matchAll(/`([^`]+\.template\.md)`/g);
         for (const match of templateMatches) {
@@ -97,10 +244,10 @@ class PromptParser {
     /**
      * Extract output structure requirements
      */
-    extractOutputStructure(content) {
-        const output = {
-            structure: { directories: [] },
-            files: { content: [], 'source-of-truth': [], logs: [] }
+    extractOutputStructure(content: string): OutputStructure {
+        const output: OutputStructure = {
+            structure: { directories: [] as string[] },
+            files: { content: [] as string[], 'source-of-truth': [] as string[], logs: [] as string[] }
         };
 
         // Extract timestamp format
@@ -132,10 +279,15 @@ class PromptParser {
     }
 
     /**
+     * Content rules type definition
+     */
+
+
+    /**
      * Extract content generation rules
      */
-    extractContentRules(content) {
-        const rules = {
+    extractContentRules(content: string): ContentRules {
+        const rules: ContentRules = {
             'example-prompts': {},
             parameters: {},
             headers: {},
@@ -189,8 +341,8 @@ class PromptParser {
     /**
      * Extract validation rules
      */
-    extractValidationRules(content) {
-        const rules = {
+    extractValidationRules(content: string): ValidationRules {
+        const rules: ValidationRules = {
             content: {},
             structure: {}
         };
@@ -217,8 +369,8 @@ class PromptParser {
     /**
      * Extract tool categorization rules
      */
-    extractToolCategorization(content) {
-        const categorization = {};
+    extractToolCategorization(content: string): ToolCategorization {
+        const categorization: ToolCategorization = {};
 
         if (content.includes('NEW TOOL CATEGORY')) {
             categorization['new-tool'] = {
@@ -249,12 +401,12 @@ class PromptParser {
     /**
      * Compare parsed configuration with existing workflow-config.json
      */
-    async validatePromptIntegrity() {
+    async validatePromptIntegrity(): Promise<ValidatePromptResult> {
         try {
             const currentConfig = JSON.parse(await fs.readFile(this.configPath, 'utf8'));
             const parsedConfig = await this.parsePrompt();
 
-            const discrepancies = [];
+            const discrepancies: string[] = [];
 
             // Compare sources
             if (JSON.stringify(currentConfig.sources) !== JSON.stringify(parsedConfig.sources)) {
@@ -272,15 +424,16 @@ class PromptParser {
                 currentConfig,
                 parsedConfig
             };
-        } catch (error) {
-            throw new Error(`Failed to validate prompt integrity: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            throw new Error(`Failed to validate prompt integrity: ${errorMessage}`);
         }
     }
 
     /**
      * Update workflow-config.json based on prompt changes
      */
-    async updateWorkflowConfig() {
+    async updateWorkflowConfig(): Promise<UpdateWorkflowResult> {
         try {
             const parsedConfig = await this.parsePrompt();
             const currentConfig = JSON.parse(await fs.readFile(this.configPath, 'utf8'));
@@ -303,16 +456,17 @@ class PromptParser {
                 updatedConfig,
                 changes: this.identifyChanges(currentConfig, updatedConfig)
             };
-        } catch (error) {
-            throw new Error(`Failed to update workflow config: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            throw new Error(`Failed to update workflow config: ${errorMessage}`);
         }
     }
 
     /**
      * Identify specific changes between configurations
      */
-    identifyChanges(oldConfig, newConfig) {
-        const changes = [];
+    identifyChanges(oldConfig: any, newConfig: any): WorkflowConfigChange[] {
+        const changes: WorkflowConfigChange[] = [];
 
         // Compare each major section
         const sections = ['sources', 'templates', 'output', 'content-rules', 'validation-rules', 'tool-categorization'];
@@ -334,8 +488,8 @@ class PromptParser {
     /**
      * Generate impact analysis for prompt changes
      */
-    async generateImpactAnalysis(changes) {
-        const impactedModules = [];
+    async generateImpactAnalysis(changes: WorkflowConfigChange[]): Promise<ImpactAnalysis> {
+        const impactedModules: string[] = [];
 
         for (const change of changes) {
             switch (change.section) {
@@ -357,12 +511,31 @@ class PromptParser {
             }
         }
 
+        const uniqueModules = [...new Set(impactedModules)];
+        
+        // Determine severity based on number of impacted modules
+        let severity = 'low';
+        if (uniqueModules.length > 3) {
+            severity = 'high';
+        } else if (uniqueModules.length > 1) {
+            severity = 'medium';
+        }
+
+        // Generate recommendations
+        const recommendations: string[] = [];
+        if (uniqueModules.includes('data-extractors/*')) {
+            recommendations.push('Update source data extraction logic');
+        }
+        if (uniqueModules.includes('content-builders/*')) {
+            recommendations.push('Update content generation rules');
+        }
+
         return {
-            changes,
-            impactedModules: [...new Set(impactedModules)],
-            updateRequired: impactedModules.length > 0
+            impactedModules: uniqueModules,
+            severity,
+            recommendations
         };
     }
 }
 
-module.exports = PromptParser;
+// Already exported as default class

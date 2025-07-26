@@ -4,11 +4,61 @@
  * This module validates the integrity between prompt file and code implementation
  */
 
-const fs = require('fs').promises;
-const path = require('path');
-const PromptParser = require('../config/prompt-parser');
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
+import PromptParser from '../config/prompt-parser.js';
 
-class IntegrationValidator {
+/**
+ * Test result status type
+ */
+export type ValidationStatus = 'PASS' | 'WARN' | 'FAIL';
+
+/**
+ * Validation test result
+ */
+export interface ValidationTest {
+    test: string;
+    status: ValidationStatus;
+    message: string;
+    details?: string | string[];
+}
+
+/**
+ * Validation results structure
+ */
+export interface ValidationResults {
+    configurationAlignment: ValidationTest[];
+    moduleCompleteness: ValidationTest[];
+    workflowIntegrity: ValidationTest[];
+    codeCompliance: ValidationTest[];
+}
+
+/**
+ * Validation summary
+ */
+export interface ValidationSummary {
+    total: number;
+    passed: number;
+    warnings: number;
+    failed: number;
+}
+
+/**
+ * Full validation report
+ */
+export interface ValidationReport {
+    timestamp: string;
+    summary: ValidationSummary;
+    overallStatus: 'PASS' | 'PASS_WITH_WARNINGS' | 'FAIL';
+    results: ValidationResults;
+    recommendations: string[];
+}
+
+export default class IntegrationValidator {
+
+    public promptParser: PromptParser;
+    public validationResults: ValidationResults;
+
     constructor() {
         this.promptParser = new PromptParser();
         this.validationResults = {
@@ -22,7 +72,7 @@ class IntegrationValidator {
     /**
      * Run complete integration validation
      */
-    async validateIntegration() {
+    async validateIntegration(): Promise<{ report: ValidationReport; reportPath: string }> {
         console.log('🔍 Starting integration validation...');
 
         try {
@@ -48,15 +98,16 @@ class IntegrationValidator {
 
             return report;
 
-        } catch (error) {
-            throw new Error(`Integration validation failed: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            throw new Error(`Integration validation failed: ${errorMessage}`);
         }
     }
 
     /**
      * Validate that configuration matches prompt requirements
      */
-    async validateConfigurationAlignment() {
+    async validateConfigurationAlignment(): Promise<void> {
         const integrity = await this.promptParser.validatePromptIntegrity();
         
         if (integrity.isValid) {
@@ -78,7 +129,7 @@ class IntegrationValidator {
     /**
      * Validate that all required modules exist and are complete
      */
-    async validateModuleCompleteness() {
+    async validateModuleCompleteness(): Promise<void> {
         const workflowConfig = JSON.parse(
             await fs.readFile(this.promptParser.configPath, 'utf8')
         );
@@ -100,12 +151,13 @@ class IntegrationValidator {
                     message: hasRequiredExports ? 'Module complete' : 'Module missing required exports'
                 });
                 
-            } catch (error) {
+            } catch (error: unknown) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
                 this.validationResults.moduleCompleteness.push({
                     test: `Module: ${modulePath}`,
                     status: 'FAIL',
                     message: 'Module not found',
-                    details: error.message
+                    details: errorMessage
                 });
             }
         }
@@ -114,8 +166,8 @@ class IntegrationValidator {
     /**
      * Get list of required modules based on configuration
      */
-    getRequiredModules(config) {
-        const modules = [];
+    getRequiredModules(config: any): string[] {
+        const modules: string[] = [];
         
         // Data extractors
         modules.push('data-extractors/azmcp-commands-extractor.js');
@@ -165,7 +217,7 @@ class IntegrationValidator {
     /**
      * Validate that a module has required exports
      */
-    async validateModuleExports(modulePath) {
+    async validateModuleExports(modulePath: string): Promise<boolean> {
         try {
             const content = await fs.readFile(modulePath, 'utf8');
             
@@ -177,7 +229,7 @@ class IntegrationValidator {
                               content.includes('async function');
             
             return hasExports;
-        } catch (error) {
+        } catch (error: unknown) {
             return false;
         }
     }
@@ -185,7 +237,7 @@ class IntegrationValidator {
     /**
      * Validate workflow execution integrity
      */
-    async validateWorkflowIntegrity() {
+    async validateWorkflowIntegrity(): Promise<void> {
         try {
             // Test main entry point
             const mainPath = path.join(__dirname, '../../../../src', 'main.js');
@@ -225,12 +277,13 @@ class IntegrationValidator {
                 message: 'Documentation orchestrator exists'
             });
 
-        } catch (error) {
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
             this.validationResults.workflowIntegrity.push({
                 test: 'Workflow Integration',
                 status: 'FAIL',
                 message: 'Workflow integration issue',
-                details: error.message
+                details: errorMessage
             });
         }
     }
@@ -238,7 +291,7 @@ class IntegrationValidator {
     /**
      * Validate code compliance with prompt rules
      */
-    async validateCodeCompliance() {
+    async validateCodeCompliance(): Promise<void> {
         const workflowConfig = JSON.parse(
             await fs.readFile(this.promptParser.configPath, 'utf8')
         );
@@ -256,7 +309,7 @@ class IntegrationValidator {
     /**
      * Validate that content rules are implemented in content builders
      */
-    async validateContentRulesImplementation(contentRules) {
+    async validateContentRulesImplementation(contentRules: any): Promise<void> {
         const builderPath = path.join(__dirname, '../../../../src', 'content-builders');
         
         try {
@@ -287,12 +340,13 @@ class IntegrationValidator {
                 message: hasRequiredFormat ? 'Parameter format implemented' : 'Parameter format may not match rules'
             });
 
-        } catch (error) {
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
             this.validationResults.codeCompliance.push({
                 test: 'Content Rules Implementation',
                 status: 'FAIL',
                 message: 'Could not validate content rules',
-                details: error.message
+                details: errorMessage
             });
         }
     }
@@ -300,7 +354,7 @@ class IntegrationValidator {
     /**
      * Validate that validation rules are implemented in quality controllers
      */
-    async validateValidationRulesImplementation(validationRules) {
+    async validateValidationRulesImplementation(validationRules: any): Promise<void> {
         const controllerPath = path.join(__dirname, '../../../../src', 'quality-controllers');
         
         try {
@@ -319,12 +373,13 @@ class IntegrationValidator {
                 message: hasContentValidation ? 'Content validation implemented' : 'Some validation rules may be missing'
             });
 
-        } catch (error) {
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
             this.validationResults.codeCompliance.push({
                 test: 'Validation Rules Implementation',
                 status: 'FAIL',
                 message: 'Could not validate validation rules',
-                details: error.message
+                details: errorMessage
             });
         }
     }
@@ -332,7 +387,7 @@ class IntegrationValidator {
     /**
      * Validate that source URLs are consistent across modules
      */
-    async validateSourceUrlConsistency(sources) {
+    async validateSourceUrlConsistency(sources: any): Promise<void> {
         const dataExtractorPath = path.join(__dirname, '../../../../src', 'data-extractors');
         
         try {
@@ -350,12 +405,13 @@ class IntegrationValidator {
                 });
             }
 
-        } catch (error) {
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
             this.validationResults.codeCompliance.push({
                 test: 'Source URL Consistency',
                 status: 'FAIL',
                 message: 'Could not validate source URLs',
-                details: error.message
+                details: errorMessage
             });
         }
     }
@@ -363,7 +419,7 @@ class IntegrationValidator {
     /**
      * Generate comprehensive validation report
      */
-    async generateValidationReport() {
+    async generateValidationReport(): Promise<{ report: ValidationReport; reportPath: string }> {
         const allTests = [
             ...this.validationResults.configurationAlignment,
             ...this.validationResults.moduleCompleteness,
@@ -371,17 +427,21 @@ class IntegrationValidator {
             ...this.validationResults.codeCompliance
         ];
 
-        const summary = {
+        const summary: ValidationSummary = {
             total: allTests.length,
             passed: allTests.filter(t => t.status === 'PASS').length,
             warnings: allTests.filter(t => t.status === 'WARN').length,
             failed: allTests.filter(t => t.status === 'FAIL').length
         };
 
-        const report = {
+        const overallStatus = summary.failed === 0 
+            ? (summary.warnings === 0 ? 'PASS' as const : 'PASS_WITH_WARNINGS' as const) 
+            : 'FAIL' as const;
+
+        const report: ValidationReport = {
             timestamp: new Date().toISOString(),
             summary,
-            overallStatus: summary.failed === 0 ? (summary.warnings === 0 ? 'PASS' : 'PASS_WITH_WARNINGS') : 'FAIL',
+            overallStatus,
             results: this.validationResults,
             recommendations: this.generateRecommendations(summary, allTests)
         };
@@ -396,8 +456,8 @@ class IntegrationValidator {
     /**
      * Generate recommendations based on validation results
      */
-    generateRecommendations(summary, allTests) {
-        const recommendations = [];
+    generateRecommendations(summary: ValidationSummary, allTests: ValidationTest[]): string[] {
+        const recommendations: string[] = [];
 
         if (summary.failed > 0) {
             recommendations.push('❌ Fix failing tests before proceeding');

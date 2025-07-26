@@ -4,12 +4,114 @@
  * This module analyzes changes in the prompt file and determines what code updates are needed
  */
 
-const fs = require('fs').promises;
-const path = require('path');
-const crypto = require('crypto');
-const PromptParser = require('../config/prompt-parser');
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
+import * as crypto from 'crypto';
+import PromptParser from '../config/prompt-parser.js';
 
-class ChangeDetector {
+/**
+ * Integrity check result interface
+ */
+export interface IntegrityResult {
+    isValid: boolean;
+    discrepancies: string[];
+    currentConfig: any;
+    parsedConfig: any;
+}
+
+/**
+ * Change item interface
+ */
+export interface ChangeItem {
+    type: string;
+    description: string;
+    impact: 'data-extractors' | 'content-builders' | 'quality-controllers' | 'file-generators';
+    severity: 'low' | 'medium' | 'high';
+    details: DifferenceItem[];
+}
+
+/**
+ * Difference item interface
+ */
+export interface DifferenceItem {
+    type: 'added' | 'removed' | 'modified';
+    key: string;
+    value?: any;
+    oldValue?: any;
+    newValue?: any;
+}
+
+/**
+ * Impact analysis interface
+ */
+export interface ImpactAnalysis {
+    impactedModules: string[];
+    updateActions: string[];
+    manualReviewRequired: string[];
+    estimatedEffort: 'low' | 'medium' | 'high';
+    autoUpdateable: boolean;
+}
+
+/**
+ * Change detection result interface
+ */
+export interface ChangeDetectionResult {
+    hasChanges: boolean;
+    message?: string;
+    changes?: ChangeItem[];
+    impactAnalysis?: ImpactAnalysis;
+}
+
+/**
+ * Change history entry interface
+ */
+export interface ChangeHistoryEntry {
+    timestamp: string;
+    hash: string;
+    changes: ChangeItem[];
+    processed: boolean;
+}
+
+/**
+ * Change history interface
+ */
+export interface ChangeHistory {
+    lastHash: string;
+    lastAnalysis: string;
+    changes: ChangeHistoryEntry[];
+}
+
+/**
+ * Change report interface
+ */
+export interface ChangeReport {
+    summary: {
+        timestamp: string;
+        totalChanges: number;
+        estimatedEffort: string;
+        autoUpdateable: boolean;
+    };
+    changes: Array<{
+        type: string;
+        description: string;
+        severity: string;
+        impact: string;
+        detailCount: number;
+    }>;
+    impact: {
+        modulesAffected: number;
+        updateActions: number;
+        manualReviewItems: number;
+    };
+    recommendations: string[];
+}
+
+export default class ChangeDetector {
+
+    public promptParser: PromptParser;
+    public changeHistoryPath: string;
+
+
     constructor() {
         this.promptParser = new PromptParser();
         this.changeHistoryPath = path.join(__dirname, '../../logs', 'change-history.json');
@@ -18,7 +120,7 @@ class ChangeDetector {
     /**
      * Detect changes in prompt file since last analysis
      */
-    async detectPromptChanges() {
+    async detectPromptChanges(): Promise<ChangeDetectionResult> {
         try {
             const currentPromptHash = await this.getPromptFileHash();
             const lastKnownHash = await this.getLastKnownHash();
@@ -30,7 +132,7 @@ class ChangeDetector {
                 };
             }
 
-            const integrity = await this.promptParser.validatePromptIntegrity();
+            const integrity = await this.promptParser.validatePromptIntegrity() as IntegrityResult;
             
             if (integrity.isValid) {
                 return {
@@ -48,25 +150,25 @@ class ChangeDetector {
                 impactAnalysis: await this.generateImpactAnalysis(changes)
             };
 
-        } catch (error) {
-            throw new Error(`Failed to detect prompt changes: ${error.message}`);
+        } catch (error: unknown) {
+            throw new Error(`Failed to detect prompt changes: ${error}`);
         }
     }
 
     /**
      * Get hash of current prompt file
      */
-    async getPromptFileHash() {
-        const promptContent = await fs.readFile(this.promptParser.promptFilePath, 'utf8');
+    async getPromptFileHash(): Promise<string> {
+        const promptContent = await fs.readFile(this?.promptParser?.promptFilePath, 'utf8');
         return crypto.createHash('sha256').update(promptContent).digest('hex');
     }
 
     /**
      * Get last known hash from change history
      */
-    async getLastKnownHash() {
+    async getLastKnownHash(): Promise<string> {
         try {
-            const history = JSON.parse(await fs.readFile(this.changeHistoryPath, 'utf8'));
+            const history = JSON.parse(await fs.readFile(this.changeHistoryPath, 'utf8')) as ChangeHistory;
             return history.lastHash || '';
         } catch (error) {
             return ''; // No history file exists yet
@@ -76,9 +178,9 @@ class ChangeDetector {
     /**
      * Analyze specific changes between current and parsed configuration
      */
-    async analyzeSpecificChanges(integrity) {
+    async analyzeSpecificChanges(integrity: IntegrityResult): Promise<ChangeItem[]> {
         const { currentConfig, parsedConfig, discrepancies } = integrity;
-        const changes = [];
+        const changes: ChangeItem[] = [];
 
         // Analyze source changes
         if (this.hasSourceChanges(currentConfig.sources, parsedConfig.sources)) {
@@ -130,36 +232,36 @@ class ChangeDetector {
     /**
      * Check if source configuration has changed
      */
-    hasSourceChanges(current, parsed) {
+    hasSourceChanges(current: any, parsed: any): boolean {
         return JSON.stringify(current) !== JSON.stringify(parsed);
     }
 
     /**
      * Check if content rules have changed
      */
-    hasContentRuleChanges(current, parsed) {
+    hasContentRuleChanges(current: any, parsed: any): boolean {
         return JSON.stringify(current) !== JSON.stringify(parsed);
     }
 
     /**
      * Check if validation rules have changed
      */
-    hasValidationChanges(current, parsed) {
+    hasValidationChanges(current: any, parsed: any): boolean {
         return JSON.stringify(current) !== JSON.stringify(parsed);
     }
 
     /**
      * Check if output structure have changed
      */
-    hasOutputChanges(current, parsed) {
+    hasOutputChanges(current: any, parsed: any): boolean {
         return JSON.stringify(current) !== JSON.stringify(parsed);
     }
 
     /**
      * Compare objects and return detailed differences
      */
-    compareObjects(obj1, obj2) {
-        const differences = [];
+    compareObjects(obj1: any, obj2: any): DifferenceItem[] {
+        const differences: DifferenceItem[] = [];
         
         const allKeys = new Set([...Object.keys(obj1 || {}), ...Object.keys(obj2 || {})]);
         
@@ -184,10 +286,10 @@ class ChangeDetector {
     /**
      * Generate impact analysis for detected changes
      */
-    async generateImpactAnalysis(changes) {
-        const impactedModules = new Set();
-        const updateActions = [];
-        const manualReviewRequired = [];
+    async generateImpactAnalysis(changes: ChangeItem[]): Promise<ImpactAnalysis> {
+        const impactedModules = new Set<string>();
+        const updateActions: string[] = [];
+        const manualReviewRequired: string[] = [];
 
         for (const change of changes) {
             switch (change.impact) {
@@ -231,7 +333,7 @@ class ChangeDetector {
     /**
      * Estimate update effort based on changes
      */
-    estimateUpdateEffort(changes) {
+    estimateUpdateEffort(changes: ChangeItem[]): 'low' | 'medium' | 'high' {
         const severityWeights = { low: 1, medium: 3, high: 5 };
         const totalWeight = changes.reduce((sum, change) => sum + severityWeights[change.severity], 0);
 
@@ -243,19 +345,19 @@ class ChangeDetector {
     /**
      * Update change history with new analysis
      */
-    async updateChangeHistory(newHash, changes) {
+    async updateChangeHistory(newHash: string, changes: ChangeItem[]): Promise<void> {
         const timestamp = new Date().toISOString();
         
-        let history = [];
+        let history: ChangeHistoryEntry[] = [];
         try {
             const existingHistory = await fs.readFile(this.changeHistoryPath, 'utf8');
-            history = JSON.parse(existingHistory).changes || [];
+            history = (JSON.parse(existingHistory) as ChangeHistory).changes || [];
         } catch (error) {
             // Create logs directory if it doesn't exist
             await fs.mkdir(path.dirname(this.changeHistoryPath), { recursive: true });
         }
 
-        const newEntry = {
+        const newEntry: ChangeHistoryEntry = {
             timestamp,
             hash: newHash,
             changes,
@@ -264,7 +366,7 @@ class ChangeDetector {
 
         history.push(newEntry);
 
-        const updatedHistory = {
+        const updatedHistory: ChangeHistory = {
             lastHash: newHash,
             lastAnalysis: timestamp,
             changes: history.slice(-10) // Keep last 10 entries
@@ -276,8 +378,12 @@ class ChangeDetector {
     /**
      * Generate detailed change report
      */
-    async generateChangeReport(changeAnalysis) {
-        const { changes, impactAnalysis } = changeAnalysis;
+    async generateChangeReport(changeAnalysis: ChangeDetectionResult): Promise<{report: ChangeReport, reportPath: string}> {
+        const { changes = [], impactAnalysis } = changeAnalysis;
+        
+        if (!impactAnalysis) {
+            throw new Error('Impact analysis is required for generating a change report');
+        }
         
         const report = {
             summary: {
@@ -311,8 +417,8 @@ class ChangeDetector {
     /**
      * Generate recommendations based on impact analysis
      */
-    generateRecommendations(impactAnalysis) {
-        const recommendations = [];
+    generateRecommendations(impactAnalysis: ImpactAnalysis): string[] {
+        const recommendations: string[] = [];
 
         if (impactAnalysis.autoUpdateable) {
             recommendations.push('All changes can be automatically applied');
@@ -333,4 +439,4 @@ class ChangeDetector {
     }
 }
 
-module.exports = ChangeDetector;
+// Class is already exported as default

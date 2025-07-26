@@ -4,12 +4,46 @@
  * This module automatically updates code modules based on prompt file changes
  */
 
-const fs = require('fs').promises;
-const path = require('path');
-const PromptParser = require('../config/prompt-parser');
-const ChangeDetector = require('./change-detector');
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
+import PromptParser from '../config/prompt-parser.js';
+import ChangeDetector, { 
+  ChangeItem, 
+  ImpactAnalysis, 
+  ChangeDetectionResult,
+  DifferenceItem
+} from './change-detector.js';
+
+/**
+ * Update result interface
+ */
+interface UpdateResult {
+  type: string;
+  updates: string[];
+  success: boolean;
+}
+
+/**
+ * Update summary interface
+ */
+interface UpdateSummary {
+  timestamp: string;
+  automaticUpdates: number;
+  manualReviewRequired: number;
+  results: UpdateResult[];
+  manualReviewItems: ChangeItem[];
+  success: boolean;
+  nextSteps: string[];
+}
+
+// Define a type for the update strategies
+type UpdateStrategy = (change: ChangeItem) => Promise<UpdateResult>;
 
 class AutoUpdater {
+    public promptParser: PromptParser;
+    public changeDetector: ChangeDetector;
+    public updateStrategies: Record<string, UpdateStrategy>;
+
     constructor() {
         this.promptParser = new PromptParser();
         this.changeDetector = new ChangeDetector();
@@ -25,7 +59,7 @@ class AutoUpdater {
     /**
      * Apply all detected prompt changes to code modules
      */
-    async applyPromptUpdates() {
+    async applyPromptUpdates(): Promise<{ summary: UpdateSummary; summaryPath: string } | { success: boolean; message: string }> {
         try {
             console.log('🔍 Detecting prompt changes...');
             const changeAnalysis = await this.changeDetector.detectPromptChanges();
@@ -35,30 +69,34 @@ class AutoUpdater {
                 return { success: true, message: 'No updates needed' };
             }
 
-            console.log(`📝 Found ${changeAnalysis.changes.length} changes to apply`);
+            console.log(`📝 Found ${changeAnalysis?.changes?.length} changes to apply`);
 
             // Update workflow configuration first
             console.log('📋 Updating workflow configuration...');
             await this.promptParser.updateWorkflowConfig();
 
-            const results = [];
-            const manualReviewItems = [];
+            const results: UpdateResult[] = [];
+            const manualReviewItems: ChangeItem[] = [];
 
-            for (const change of changeAnalysis.changes) {
+            for (const change of changeAnalysis?.changes || []) {
                 console.log(`🔧 Processing ${change.type} changes...`);
                 
                 try {
-                    if (change.severity === 'high' && this.requiresManualReview(change)) {
+                    if (change?.severity === 'high' && this.requiresManualReview(change)) {
                         manualReviewItems.push(change);
-                        console.log(`⚠️  ${change.type} requires manual review`);
+                        console.log(`⚠️  ${change?.type} requires manual review`);
                     } else {
                         const result = await this.applyChange(change);
                         results.push(result);
-                        console.log(`✅ Applied ${change.type} changes`);
+                        console.log(`✅ Applied ${change?.type} changes`);
                     }
-                } catch (error) {
-                    console.error(`❌ Failed to apply ${change.type}: ${error.message}`);
-                    manualReviewItems.push({ ...change, error: error.message });
+                } catch (error: unknown) {
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+                    console.error(`❌ Failed to apply ${change?.type}: ${errorMessage}`);
+                    // Store the error with the change item
+                    const changeWithError = {...change};
+                    (changeWithError as any).error = errorMessage; // Using type assertion for the error property
+                    manualReviewItems.push(changeWithError);
                 }
             }
 
@@ -68,15 +106,15 @@ class AutoUpdater {
             console.log('🎉 Update process completed');
             return summary;
 
-        } catch (error) {
-            throw new Error(`Failed to apply prompt updates: ${error.message}`);
+        } catch (error: unknown) {
+            throw new Error(`Failed to apply prompt updates: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
     /**
      * Check if a change requires manual review
      */
-    requiresManualReview(change) {
+    requiresManualReview(change: ChangeItem): boolean {
         const manualReviewCriteria = [
             change.type === 'content-rules' && change.details.some(d => d.key === 'example-prompts'),
             change.type === 'output-structure' && change.details.some(d => d.type === 'removed'),
@@ -89,7 +127,7 @@ class AutoUpdater {
     /**
      * Apply a specific change using the appropriate strategy
      */
-    async applyChange(change) {
+    async applyChange(change: ChangeItem): Promise<UpdateResult> {
         const strategy = this.updateStrategies[change.type];
         if (!strategy) {
             throw new Error(`No update strategy found for change type: ${change.type}`);
@@ -101,9 +139,9 @@ class AutoUpdater {
     /**
      * Update data extractor modules based on source changes
      */
-    async updateDataExtractors(change) {
+    async updateDataExtractors(change: ChangeItem): Promise<UpdateResult> {
         const extractorsPath = path.join(__dirname, '../../../../src/data-extractors');
-        const updates = [];
+        const updates: string[] = [];
 
         for (const detail of change.details) {
             if (detail.key === 'azmcp-commands' && detail.type === 'modified') {
@@ -134,9 +172,9 @@ class AutoUpdater {
     /**
      * Update content builder modules based on content rule changes
      */
-    async updateContentBuilders(change) {
+    async updateContentBuilders(change: ChangeItem): Promise<UpdateResult> {
         const buildersPath = path.join(__dirname, '../../../../src/content-builders');
-        const updates = [];
+        const updates: string[] = [];
 
         for (const detail of change.details) {
             if (detail.key === 'example-prompts') {
@@ -167,9 +205,9 @@ class AutoUpdater {
     /**
      * Update quality controller modules based on validation rule changes
      */
-    async updateQualityControllers(change) {
+    async updateQualityControllers(change: ChangeItem): Promise<UpdateResult> {
         const controllersPath = path.join(__dirname, '../../../../src/quality-controllers');
-        const updates = [];
+        const updates: string[] = [];
 
         for (const detail of change.details) {
             if (detail.key === 'content') {
@@ -193,9 +231,9 @@ class AutoUpdater {
     /**
      * Update file generator modules based on output structure changes
      */
-    async updateFileGenerators(change) {
+    async updateFileGenerators(change: ChangeItem): Promise<UpdateResult> {
         const generatorsPath = path.join(__dirname, '../../../../src/file-generators');
-        const updates = [];
+        const updates: string[] = [];
 
         for (const detail of change.details) {
             if (detail.key === 'files') {
@@ -222,9 +260,9 @@ class AutoUpdater {
     /**
      * Update template processor modules based on template changes
      */
-    async updateTemplateProcessors(change) {
+    async updateTemplateProcessors(change: ChangeItem): Promise<UpdateResult> {
         const processorsPath = path.join(__dirname, '../../../../src/template-processors');
-        const updates = [];
+        const updates: string[] = [];
 
         for (const detail of change.details) {
             if (detail.key === 'primary' || detail.key === 'partial') {
@@ -241,21 +279,21 @@ class AutoUpdater {
     /**
      * Update source URL in a module file
      */
-    async updateSourceUrl(filePath, constant, newUrl) {
+    async updateSourceUrl(filePath: string, constant: string, newUrl: string): Promise<void> {
         try {
             const content = await fs.readFile(filePath, 'utf8');
             const urlPattern = new RegExp(`(const\\s+${constant}\\s*=\\s*['"])([^'"]+)(['"])`);
             const updatedContent = content.replace(urlPattern, `$1${newUrl}$3`);
             await fs.writeFile(filePath, updatedContent);
-        } catch (error) {
-            console.warn(`Could not update ${constant} in ${filePath}: ${error.message}`);
+        } catch (error: unknown) {
+            console.warn(`Could not update ${constant} in ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
     /**
      * Update example prompt generation rules
      */
-    async updateExamplePromptRules(filePath, newRules) {
+    async updateExamplePromptRules(filePath: string, newRules: any): Promise<void> {
         try {
             const content = await fs.readFile(filePath, 'utf8');
             
@@ -265,15 +303,15 @@ class AutoUpdater {
             const updatedContent = content.replace(configPattern, newConfig);
             
             await fs.writeFile(filePath, updatedContent);
-        } catch (error) {
-            console.warn(`Could not update example prompt rules: ${error.message}`);
+        } catch (error: unknown) {
+            console.warn(`Could not update example prompt rules: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
     /**
      * Update parameter formatting rules
      */
-    async updateParameterRules(filePath, newRules) {
+    async updateParameterRules(filePath: string, newRules: any): Promise<void> {
         try {
             const content = await fs.readFile(filePath, 'utf8');
             
@@ -284,15 +322,15 @@ class AutoUpdater {
                 const updatedContent = content.replace(formatPattern, `REQUIRED_LABEL = '${requiredLabel}';`);
                 await fs.writeFile(filePath, updatedContent);
             }
-        } catch (error) {
-            console.warn(`Could not update parameter rules: ${error.message}`);
+        } catch (error: unknown) {
+            console.warn(`Could not update parameter rules: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
     /**
      * Update header formatting rules
      */
-    async updateHeaderRules(filePath, newRules) {
+    async updateHeaderRules(filePath: string, newRules: any): Promise<void> {
         try {
             const content = await fs.readFile(filePath, 'utf8');
             
@@ -302,15 +340,15 @@ class AutoUpdater {
                 const updatedContent = content.replace(casePattern, 'toSentenceCase');
                 await fs.writeFile(filePath, updatedContent);
             }
-        } catch (error) {
-            console.warn(`Could not update header rules: ${error.message}`);
+        } catch (error: unknown) {
+            console.warn(`Could not update header rules: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
     /**
      * Update content validation rules
      */
-    async updateContentValidationRules(filePath, newRules) {
+    async updateContentValidationRules(filePath: string, newRules: any): Promise<void> {
         // Implementation for updating content validation rules
         console.log('Updating content validation rules...');
     }
@@ -318,7 +356,7 @@ class AutoUpdater {
     /**
      * Update structure validation rules
      */
-    async updateStructureValidationRules(filePath, newRules) {
+    async updateStructureValidationRules(filePath: string, newRules: any): Promise<void> {
         // Implementation for updating structure validation rules
         console.log('Updating structure validation rules...');
     }
@@ -326,7 +364,7 @@ class AutoUpdater {
     /**
      * Update output file structure
      */
-    async updateOutputFileStructure(filePath, newStructure) {
+    async updateOutputFileStructure(filePath: string, newStructure: any): Promise<void> {
         // Implementation for updating output file structure
         console.log('Updating output file structure...');
     }
@@ -334,7 +372,7 @@ class AutoUpdater {
     /**
      * Update directory structure logic
      */
-    async updateDirectoryStructure(filePath, newStructure) {
+    async updateDirectoryStructure(filePath: string, newStructure: any): Promise<void> {
         // Implementation for updating directory structure
         console.log('Updating directory structure logic...');
     }
@@ -342,7 +380,7 @@ class AutoUpdater {
     /**
      * Update template references
      */
-    async updateTemplateReferences(filePath, templateType, newTemplate) {
+    async updateTemplateReferences(filePath: string, templateType: string, newTemplate: string): Promise<void> {
         // Implementation for updating template references
         console.log(`Updating ${templateType} template reference to ${newTemplate}...`);
     }
@@ -350,8 +388,8 @@ class AutoUpdater {
     /**
      * Generate update summary
      */
-    async generateUpdateSummary(results, manualReviewItems) {
-        const summary = {
+    async generateUpdateSummary(results: UpdateResult[], manualReviewItems: ChangeItem[]): Promise<{ summary: UpdateSummary; summaryPath: string }> {
+        const summary: UpdateSummary = {
             timestamp: new Date().toISOString(),
             automaticUpdates: results.length,
             manualReviewRequired: manualReviewItems.length,
@@ -375,4 +413,4 @@ class AutoUpdater {
     }
 }
 
-module.exports = AutoUpdater;
+export { AutoUpdater };

@@ -2,21 +2,30 @@
   "name": "@mcp-process-to-doc/prompt-change-detection",
   "version": "1.0.0",
   "description": "Prompt-to-code integration system for MCP documentation generation",
-  "main": "src/index.js",
+  "type": "module",
+  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js"
+  },
   "bin": {
-    "analyze-prompt-changes": "./src/cli/analyze-prompt-changes.js",
-    "apply-prompt-updates": "./src/cli/apply-prompt-updates.js",
-    "validate-integration": "./src/cli/validate-integration.js",
-    "convert-prompt": "./src/cli/markdown-converter-cli.js"
+    "analyze-prompt-changes": "./dist/cli/analyze-prompt-changes.js",
+    "apply-prompt-updates": "./dist/cli/apply-prompt-updates.js",
+    "validate-integration": "./dist/cli/validate-integration.js",
+    "convert-prompt": "./dist/cli/markdown-converter-cli.js"
   },
   "scripts": {
-    "analyze": "node src/cli/analyze-prompt-changes.js",
-    "apply": "node src/cli/apply-prompt-updates.js",
-    "validate": "node src/cli/validate-integration.js",
-    "convert": "node src/cli/markdown-converter-cli.js",
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rimraf dist",
+    "prebuild": "npm run clean",
+    "analyze": "node dist/cli/analyze-prompt-changes.js",
+    "apply": "node dist/cli/apply-prompt-updates.js",
+    "validate": "node dist/cli/validate-integration.js",
+    "convert": "node dist/cli/markdown-converter-cli.js",
     "sync": "npm run analyze && npm run apply",
     "full-validation": "npm run validate",
-    "start": "npm run convert ../../create-docs.prompt.md --validate && npm run sync && npm run validate"
+    "start": "npm run convert ../../create-docs.prompt.md --validate && npm run sync && npm run validate",
+    "prepare": "npm run build"
   },
   "keywords": [
     "mcp",
@@ -28,12 +37,17 @@
   "author": "MCP Documentation Team",
   "license": "MIT",
   "dependencies": {
-    "fs": "^0.0.1-security",
     "gray-matter": "^4.0.3",
-    "markdown-it": "^14.1.0",
-    "path": "^0.12.7"
+    "markdown-it": "^14.1.0"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^13.0.9",
+    "@types/node": "^20.19.9",
+    "rimraf": "^5.0.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0"
   }
 }
