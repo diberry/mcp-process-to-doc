@@ -4,10 +4,15 @@
  * This module analyzes changes in the prompt file and determines what code updates are needed
  */
 
-import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
+import { promises as fs } from 'node:fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import * as crypto from 'crypto';
 import PromptParser from '../config/prompt-parser.js';
+
+// Derive __dirname for ES modules
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 
 /**
  * Integrity check result interface

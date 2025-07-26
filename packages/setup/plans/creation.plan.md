@@ -1,14 +1,14 @@
-# Plan to Turn `setup.1.prompt.md` into a Programmatic Package
+# Plan to Turn `setup.prompt.md` into a Programmatic Package
 
 ## Overview
-The goal is to create a programmatic package at `./packages/setup` that automates the setup process described in `setup.1.prompt.md`. This package will manage files and folders for setup, extrapolate file and directory names into a JSON configuration file, and ensure compatibility with other packages.
+The goal is to create a programmatic package at `./packages/setup` that automates the setup process described in `setup.prompt.md`. This package will manage files and folders for setup, extrapolate file and directory names into a JSON configuration file, and ensure compatibility with other packages.
 
 ## Structure
 ### Classes
 1. **SetupManager**
    - Purpose: Manage the overall setup process.
    - Methods:
-     - `initializeSetup(configPath: string): Promise<void>`: Initialize setup using a configuration file.
+     - `initializeSetup(configPath: string, schemaPath: string): Promise<void>`: Initialize setup using a configuration file and validate it against the schema.
      - `createTimestampDirectory(): string`: Create a new directory with a timestamp.
      - `updateCurrentLog(directoryName: string): void`: Update the `current.log` file with the name of the timestamp directory.
 
@@ -16,7 +16,7 @@ The goal is to create a programmatic package at `./packages/setup` that automate
    - Purpose: Handle directory creation and validation.
    - Methods:
      - `createDirectory(path: string): void`: Create a directory at the specified path.
-     - `validateDirectoryStructure(): boolean`: Ensure required directories exist.
+     - `validateDirectoryStructure(configPath: string, schemaPath: string): boolean`: Validate the directory structure using the configuration and schema.
 
 3. **FileManager**
    - Purpose: Handle file creation and updates.
@@ -29,53 +29,50 @@ The goal is to create a programmatic package at `./packages/setup` that automate
 1. **SetupConfig**
    - Purpose: Define the structure of the JSON configuration file.
    - Fields:
-     - `directories: string[]`: List of required directories.
+     - `children: { [key: string]: Directory }`: Mapping of directory names to their definitions.
      - `files: { [key: string]: string }`: Mapping of file names to their purposes.
 
-2. **LogEntry**
+2. **Directory**
+   - Purpose: Define the structure of a directory.
+   - Fields:
+     - `description: string`: Purpose of the directory.
+     - `children: { [key: string]: Directory }`: Subdirectories within the directory.
+     - `files: { [key: string]: string }`: Files within the directory.
+
+3. **LogEntry**
    - Purpose: Define the structure of log entries.
    - Fields:
      - `timestamp: string`: Timestamp of the log entry.
      - `message: string`: Description of the action performed.
 
 ## Steps
-### Step 1: Create JSON Configuration File
+### Step 1: Use JSON Configuration File
 - File: `./packages/setup/config/setup.config.json`
-- Content:
-```json
-{
-  "directories": [
-    "content",
-    "source-of-truth",
-    "logs"
-  ],
-  "files": {
-    "tools.json": "Track new tools and operations",
-    "new.md": "Communicate new or updated documentation",
-    "current.log": "Track the current timestamp directory"
-  }
-}
-```
+- Content: The configuration file defines the directory and file structure.
 
-### Step 2: Implement Classes and Methods
+### Step 2: Validate Configuration Against Schema
+- File: `./packages/setup/config/setup-schema.json`
+- Use the schema to validate the configuration file before proceeding.
+
+### Step 3: Implement Classes and Methods
 - Create `SetupManager`, `DirectoryManager`, and `FileManager` classes in `./packages/setup/src`.
 - Use TypeScript for type safety and compatibility.
 
-### Step 3: Logging
+### Step 4: Logging
 - File: `./packages/setup/logs/setup.log`
 - Log all actions performed by the package, including directory creation, file updates, and errors.
 
-### Step 4: Testing
+### Step 5: Testing
 - Create unit tests in `./packages/setup/tests`.
 - Ensure all methods work as expected and handle edge cases.
 
-### Step 5: Documentation
+### Step 6: Documentation
 - Update `README.md` in `./packages/setup` with usage instructions.
 
 ## Questions
 1. Should the package handle errors gracefully and retry operations, or fail fast? FAIL FAST
-2. Are there additional directories or files that need to be included in the JSON configuration? The file and directory structure will grow over time so the structure should be separate from the source code but detailed with enough information that the source code knows how to manage the structure. The property names of the structure should be self-evident to any english reader. 
-3. Should the package support custom directory and file names, or enforce strict adherence to the configuration? Strict adherence. 
+2. Are there additional directories or files that need to be included in the JSON configuration? The file and directory structure will grow over time so the structure should be separate from the source code but detailed with enough information that the source code knows how to manage the structure. The property names of the structure should be self-evident to any English reader.
+3. Should the package support custom directory and file names, or enforce strict adherence to the configuration? Strict adherence.
 
 ## Next Steps
 1. Confirm the structure and content of the JSON configuration file.

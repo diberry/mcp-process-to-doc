@@ -3,10 +3,13 @@
  * 
  * This module validates the integrity between prompt file and code implementation
  */
-
-import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
+import { promises as fs } from 'node:fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import PromptParser from '../config/prompt-parser.js';
+
+// Derive __dirname for ES modules
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /**
  * Test result status type

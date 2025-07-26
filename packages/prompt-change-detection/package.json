@@ -1,5 +1,5 @@
 {
-  "name": "@mcp-process-to-doc/prompt-change-detection",
+  "name": "prompt-change-detection",
   "version": "1.0.0",
   "description": "Prompt-to-code integration system for MCP documentation generation",
   "type": "module",

@@ -29,7 +29,8 @@
     "convert-prompt": "node packages/prompt-change-detection/src/cli/convert-prompt.js",
     "debug-config": "node packages/prompt-change-detection/src/cli/debug-config.js",
     "sync-prompt-to-code": "npm run analyze-prompt-changes && npm run apply-prompt-updates",
-    "full-validation": "npm run validate-integration"
+    "full-validation": "npm run validate-integration",
+    "knip": "knip"
   },
   "repository": {
     "type": "git",
@@ -50,5 +51,14 @@
   "dependencies": {
     "fs": "0.0.1-security",
     "path": "^0.12.7"
+  },
+  "workspaces": [
+    "packages/setup"
+  ],
+  "devDependencies": {
+    "@types/node": "^24.1.0",
+    "knip": "^5.62.0",
+    "typescript": "^5.8.3",
+    "rimraf": "^5.0.10"
   }
 }
