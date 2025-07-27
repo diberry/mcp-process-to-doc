@@ -4,11 +4,15 @@
  * Uses markdown-it for robust parsing and gray-matter for frontmatter
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import { promises as fs } from 'node:fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import * as crypto from 'crypto';
 const MarkdownIt = require('markdown-it');
 const matter = require('gray-matter');
+
+// Derive __dirname for ES modules
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Enhanced interfaces combining the best from both approaches
 export interface PromptMetadata {

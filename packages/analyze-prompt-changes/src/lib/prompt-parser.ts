@@ -63,8 +63,8 @@ export interface OutputStructure {
         'timestamp-format'?: string;
     };
     files: {
-        content: string[];
-        'source-of-truth': string[];
+        processing: string[];
+        documentation: string[];
         logs: string[];
     };
 }
@@ -125,6 +125,24 @@ export interface ParsedConfig {
     contentRules: ContentRules;
     validationRules: ValidationRules;
     toolCategorization: ToolCategorization;
+    processingInfo?: {
+        logs: {
+            description: string;
+            file: string;
+        };
+        prompt: {
+            description: string;
+            directory: string;
+        };
+        reports: {
+            description: string;
+            directory: string;
+        };
+        workflow: {
+            description: string;
+            directory: string;
+        };
+    };
 }
 
 export interface ValidatePromptResult {
@@ -154,13 +172,12 @@ export interface ImpactAnalysis {
 }
 
 export default class PromptParser {
+    public promptFilePath: string;
+    public configPath: string;
+    public parsedContent: ParsedConfig | null;
+    public promptJsonPath: string;
 
- public promptFilePath: string;
- public configPath: string;
- public parsedContent: ParsedConfig | null;
- public promptJsonPath: string;
-
-    constructor(promptFilePath:string, configPath:string, promptJsonPath:string) {
+    constructor(promptFilePath: string, configPath: string, promptJsonPath: string) {
         this.promptFilePath = promptFilePath;
         this.configPath = configPath;
         this.parsedContent = null;
@@ -173,20 +190,50 @@ export default class PromptParser {
     async parsePrompt(): Promise<ParsedConfig> {
         try {
             const promptContent = await fs.readFile(this.promptFilePath, 'utf8');
-            
+            const sections = promptContent.split('##');
+            const parsedData: any = {};
+
+            sections.forEach(section => {
+                const sectionTitle = section.split('\n')[0].trim();
+                const metadataMatch = section.match(/<!-- metadata: (\w+) -->/);
+                const metadata = metadataMatch ? metadataMatch[1] : null;
+                parsedData[sectionTitle] = {
+                    ...this.extractSectionContent(section),
+                    metadata
+                };
+            });
+
             const config: ParsedConfig = {
                 sources: this.extractSources(promptContent),
                 templates: this.extractTemplates(promptContent),
                 output: this.extractOutputStructure(promptContent),
                 contentRules: this.extractContentRules(promptContent),
                 validationRules: this.extractValidationRules(promptContent),
-                toolCategorization: this.extractToolCategorization(promptContent)
+                toolCategorization: this.extractToolCategorization(promptContent),
+                processingInfo: {
+                    logs: {
+                        description: 'Track issues and intermediary steps in azmcp.log.',
+                        file: 'azmcp.log'
+                    },
+                    prompt: {
+                        description: 'Source prompts for generating documentation.',
+                        directory: 'prompt'
+                    },
+                    reports: {
+                        description: 'Store analysis and validation results.',
+                        directory: 'reports'
+                    },
+                    workflow: {
+                        description: 'Configuration files and scripts for automation.',
+                        directory: 'workflow'
+                    }
+                }
             };
 
             this.parsedContent = config;
 
             // Save parsed prompt to systemFiles['prompt.json'].path
-            await fs.writeFile(this.promptJsonPath, JSON.stringify(config, null, 2));
+            await fs.writeFile(this.promptJsonPath, JSON.stringify({ ...config, sections: parsedData }, null, 2));
 
             return config;
         } catch (error: unknown) {
@@ -257,7 +304,7 @@ export default class PromptParser {
     extractOutputStructure(content: string): OutputStructure {
         const output: OutputStructure = {
             structure: { directories: [] as string[] },
-            files: { content: [] as string[], 'source-of-truth': [] as string[], logs: [] as string[] }
+            files: { processing: [] as string[], documentation: [] as string[], logs: [] as string[] }
         };
 
         // Extract timestamp format
@@ -267,23 +314,35 @@ export default class PromptParser {
         }
 
         // Extract directories
-        const dirMatches = content.matchAll(/\.\/(generated\/[^`]+)`\s*-\s*([^-\n]+)/g);
+        const dirMatches = content.matchAll(/\.\/(generated\/[^`]+)`\s*-\s*([^\n]+)/g);
         for (const match of dirMatches) {
             const dirType = match[2].trim().toLowerCase();
             if (dirType.includes('content')) output.structure.directories.push('content');
             if (dirType.includes('source')) output.structure.directories.push('source-of-truth');
             if (dirType.includes('log')) output.structure.directories.push('logs');
+            if (dirType.includes('workflow')) output.structure.directories.push('workflow');
+            if (dirType.includes('reports')) output.structure.directories.push('reports');
+            if (dirType.includes('prompt')) output.structure.directories.push('prompt');
         }
 
-        //Extract expected files
-        const fileMatches = content.matchAll(/`([^`]+\.(md|json|yml))`/g);
+        // Extract expected files
+        const fileMatches = content.matchAll(/`([^`]+\.(md|json|yml|log))`/g);
+        const uniqueFiles = new Set<string>();
+
         for (const match of fileMatches) {
             const fileName = match[1];
-            if (fileName.includes('tools.json')) output.files.content.push('tools.json');
-            if (fileName.includes('new.md')) output.files.content.push('new.md');
-            if (fileName.includes('index.yml')) output.files.content.push('index.yml');
-            if (fileName.includes('TOC.yml')) output.files.content.push('TOC.yml');
+            uniqueFiles.add(fileName);
         }
+
+        uniqueFiles.forEach(fileName => {
+            if (fileName.includes('tools.json') || fileName.includes('new.md') || fileName.includes('current.log')) {
+                output.files.processing.push(fileName);
+            } else if (fileName.includes('index.yml') || fileName.includes('TOC.yml')) {
+                output.files.documentation.push(fileName);
+            } else {
+                output.files.logs.push(fileName);
+            }
+        });
 
         return output;
     }
@@ -577,6 +636,92 @@ export default class PromptParser {
             recommendations
         };
     }
-}
 
-// Already exported as default class
+    /**
+     * Extract section content based on metadata
+     */
+    extractSectionContent(section: string) {
+        const lines = section.split('\n').filter(line => line.trim());
+        const content = {
+            required: [] as string[],
+            optional: [] as string[],
+            details: [] as { level: number; text: string }[],
+            paragraphs: [] as string[],
+            nestedBullets: [] as { level: number; text: string }[],
+            orderedLists: [] as { order: number; text: string }[]
+        };
+
+        let currentParagraph = '';
+
+        lines.forEach(line => {
+            if (line.includes('[REQUIRED]')) {
+                content.required.push(line.replace('[REQUIRED]', '').trim());
+            } else if (line.includes('[OPTIONAL]')) {
+                content.optional.push(line.replace('[OPTIONAL]', '').trim());
+            } else if (line.startsWith('-')) {
+                const level = line.match(/^-+/)?.[0].length || 1;
+                content.details.push({ level, text: line.trim() });
+            } else if (/^\d+\.\s/.test(line)) {
+                const orderMatch = line.match(/^\d+/);
+                const order = orderMatch ? parseInt(orderMatch[0], 10) : 0;
+                content.orderedLists.push({ order, text: line.replace(/^\d+\.\s/, '').trim() });
+            } else {
+                if (line.trim() === '') {
+                    if (currentParagraph) {
+                        content.paragraphs.push(currentParagraph.trim());
+                        currentParagraph = '';
+                    }
+                } else {
+                    currentParagraph += ` ${line.trim()}`;
+                }
+            }
+        });
+
+        if (currentParagraph) {
+            content.paragraphs.push(currentParagraph.trim());
+        }
+
+        return content;
+    }
+
+    /**
+     * Save parsed prompt data to a file
+     */
+    async saveParsedPrompt(parsedData: Record<string, any>, outputPath: string): Promise<void> {
+        try {
+            await fs.writeFile(outputPath, JSON.stringify(parsedData, null, 2));
+        } catch (error) {
+            throw new Error(`Failed to save parsed prompt: ${error}`);
+        }
+    }
+
+    /**
+     * Extract navigation updates from prompt content
+     */
+    async extractNavigationUpdates(content: string): Promise<Record<string, string>> {
+        const navigation: Record<string, string> = {};
+
+        const tocMatch = content.match(/TOC.*?\[URL\]\((https:\/\/[^)]+TOC\.yml)\)/);
+        if (tocMatch) navigation.toc = tocMatch[1];
+
+        const indexMatch = content.match(/landing page.*?\[URL\]\((https:\/\/[^)]+index\.yml)\)/);
+        if (indexMatch) navigation.index = indexMatch[1];
+
+        return navigation;
+    }
+
+    /**
+     * Extract parsing rules from prompt content
+     */
+    async extractParsingRules(content: string): Promise<Record<string, any>> {
+        const rules: Record<string, any> = {};
+
+        const metadataMatches = content.matchAll(/<!-- metadata: (\w+) -->/g);
+        for (const match of metadataMatches) {
+            const key = match[1];
+            rules[key] = true;
+        }
+
+        return rules;
+    }
+}

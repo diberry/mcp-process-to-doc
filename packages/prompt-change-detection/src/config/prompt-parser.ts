@@ -4,8 +4,12 @@
  * This module parses the prompt file and maintains synchronization with workflow-config.json
  */
 
-import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
+import { promises as fs } from 'node:fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+// Derive __dirname for ES modules
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /**
  * Content rules type definition

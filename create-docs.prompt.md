@@ -181,7 +181,7 @@ Guidance on content arrangement and grouping:
     - Even though Azure Developer CLI and Azure CLI are both part of the cli extension family, because they are independent of each other (considering branding and usage), they should have their own independent articles. 
 - When commands are within a branded tool family, all commands should be on a single article, grouped by tool. An example of this is key vault with its three separate areas of keys, secrets, and certificates. Group by area but stay on the same page. 
 
-1. Take the new entries in the local tools.json to create a new file documentation file for each new server in the tools.json. Place those files in a timestamped directory. Follow the format of the azure-app-configuration.md at this [URL](https://github.com/MicrosoftDocs/azure-dev-docs/blob/main/articles/azure-mcp-server/tools/app-configuration.md) to create each new server's doc file. Notice any relative or absolute links in the app-configuration.md file that you should mimic in the new files.
+1. Take the new entries in the local tools.json to create a new documentation file for each new server in the tools.json. Place those files in a timestamped directory. Follow the format of the azure-app-configuration.md at this [URL](https://github.com/MicrosoftDocs/azure-dev-docs/blob/main/articles/azure-mcp-server/tools/app-configuration.md) to create each new server's doc file. Notice any relative or absolute links in the app-configuration.md file that you should mimic in the new files.
 1. Find each new tool's primary documentation page on Microsoft Learn, if it exists, and add the documentation URL to the new entry in the tools.json file. If it doesn't exist, leave the documentation URL blank. Use this documentation to understand branding and terminology specific to this tool that should be used in the documentation file for the MCP server you generate. Neither the azmcp-commands.md nor the tools.json has the branding information required to create the new documentation files. Use the branding information from the existing documentation files in this workspace to create the new documentation files. Use the Azure Learn knowledge service tool to get that important branding information.
 1. For the `azmcp extension` tool, each operation such as `azd` or `azd` should have their own documentation file. Use the existing documentation files in this workspace as a guide for how to create these new documentation files. It should also have its own entry in the TOC and Index files. 
 
@@ -238,3 +238,29 @@ Using [Editorial instructions](editorial-review.md) to review the new documentat
 
 ## Backup policy
 1. tools.json.bak is a backup file which may include existing PRs of content which haven't been merged yet. Do not edit it. It is used to restore the tools.json if needed.
+
+## Processing Engineering Data into Documentation
+
+To process engineering data into documentation, follow these steps:
+
+1. **Logs Directory**:
+   - Use the logs directory to track issues, errors, and intermediary steps during the documentation generation process.
+   - Ensure all reasoning, questions, or issues encountered are logged in the `azmcp.log` file.
+
+2. **Prompt Directory**:
+   - The prompt directory contains the source prompts used for generating documentation.
+   - Parse the prompts to extract structured information, including metadata, sections, and navigation updates.
+
+3. **Reports Directory**:
+   - Use the reports directory to store analysis and validation results.
+   - Ensure all generated reports are reviewed for discrepancies and completeness.
+
+4. **Workflow Directory**:
+   - The workflow directory contains configuration files and scripts for automating the documentation process.
+   - Update workflow configurations based on changes in engineering data.
+
+5. **Integration**:
+   - Combine data from the logs, prompt, reports, and workflow directories to create comprehensive documentation.
+   - Ensure all files are placed in the appropriate directories under the `./generated/<timestamp>` folder.
+
+By following these steps, you can ensure that engineering data is accurately translated into user-friendly documentation.

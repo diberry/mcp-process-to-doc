@@ -1,11 +1,12 @@
-/**
+-/**
  * Auto Updater - Apply prompt changes to source code modules
  * 
  * This module automatically updates code modules based on prompt file changes
  */
 
 import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import PromptParser from '../config/prompt-parser.js';
 import ChangeDetector, { 
   ChangeItem, 
@@ -13,6 +14,9 @@ import ChangeDetector, {
   ChangeDetectionResult,
   DifferenceItem
 } from './change-detector.js';
+
+// Derive __dirname for ES modules
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /**
  * Update result interface
